@@ -118,9 +118,9 @@ function PasswordInput({
   );
 }
 
-type BannerVariant = "error" | "warning";
+export type BannerVariant = "error" | "warning";
 
-function AlertBanner({
+export function AlertBanner({
   variant,
   children,
 }: {

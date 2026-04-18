@@ -11,12 +11,18 @@ import {
 } from "@/components/ui/card";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Mail } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import Link from "next/link";
 import * as React from "react";
-import { toast } from "sonner";
+import { AlertBanner, BannerVariant } from "../../components/register-form";
 
 export function VerifyPromptCard({ email }: { email: string | null }) {
   const [rateLimited, setRateLimited] = React.useState(false);
+
+  const [banner, setBanner] = React.useState<{
+    type: BannerVariant;
+    message: string;
+  } | null>(null);
 
   const { mutate: handleResend, isPending: sending } = useMutation({
     mutationFn: async () => {
@@ -40,16 +46,25 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
     },
 
     onSuccess: () => {
-      toast.success("Verification email resent. Check your inbox.");
+      setBanner({
+        type: "warning",
+        message: "Verification email resent. Please check your inbox.",
+      });
     },
 
     onError: (error) => {
       if (error.message === "RATE_LIMITED") {
         setRateLimited(true);
 
-        toast.warning("Wait before requesting another link.");
+        setBanner({
+          type: "warning",
+          message: "Please wait before requesting another verification email.",
+        });
       } else {
-        toast.error("Something went wrong. Please try again.");
+        setBanner({
+          type: "error",
+          message: "Something went wrong. Please try again.",
+        });
       }
     },
   });
@@ -61,10 +76,12 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Mail className="h-7 w-7 text-primary" />
           </div>
+
           <div className="space-y-2">
             <CardTitle className="text-2xl font-bold tracking-tight">
               Check your email
             </CardTitle>
+
             <CardDescription className="text-sm leading-relaxed text-muted-foreground">
               We sent a verification link to{" "}
               {email ? (
@@ -76,11 +93,21 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="space-y-4">
+          <AnimatePresence mode="wait">
+            {banner && (
+              <AlertBanner key="banner" variant={banner.type}>
+                {banner.message}
+              </AlertBanner>
+            )}
+          </AnimatePresence>
+
           <Button
             variant="outline"
             onClick={() => {
               if (!email || rateLimited) return;
+              setBanner(null);
               handleResend();
             }}
             disabled={sending || rateLimited || !email}
@@ -88,7 +115,7 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
           >
             {sending ? (
               <>
-                <Loader2 size={15} className=" animate-spin" />
+                <Loader2 size={15} className="animate-spin" />
                 Sending...
               </>
             ) : rateLimited ? (
@@ -109,6 +136,7 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
               Sign in with a different account
             </Link>
           </p>
+
           <p className="text-xs text-muted-foreground text-center">
             Check your spam or junk folder if you don&apos;t see it within 2
             minutes.

@@ -20,12 +20,15 @@ import { LoginSchema, type LoginInput } from "@/lib/validators/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
-import { toast } from "sonner";
+import {
+  AlertBanner,
+  BannerVariant,
+} from "../../register/components/register-form";
 
 function PasswordInput({
   id,
@@ -37,6 +40,7 @@ function PasswordInput({
   return (
     <div className="relative">
       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
       <Input
         {...props}
         id={id}
@@ -60,6 +64,12 @@ function PasswordInput({
 
 export function LoginForm() {
   const router = useRouter();
+
+  const [banner, setBanner] = React.useState<{
+    type: BannerVariant;
+    message: string;
+  } | null>(null);
+
   const [shake, setShake] = React.useState(false);
 
   const form = useForm<LoginInput>({
@@ -89,7 +99,6 @@ export function LoginForm() {
     },
 
     onSuccess: () => {
-      toast.success("Welcome back!");
       router.push("/dashboard");
       router.refresh();
     },
@@ -97,16 +106,26 @@ export function LoginForm() {
     onError: (error) => {
       try {
         const json = JSON.parse(error.message);
-        toast.error(json.error || "Invalid email or password");
-      } catch {
-        toast.error("Something went wrong. Please try again.");
-      }
 
-      triggerShake();
+        setBanner({
+          type: "error",
+          message: json.error ?? "Invalid email or password.",
+        });
+
+        triggerShake();
+      } catch {
+        setBanner({
+          type: "error",
+          message: "Something went wrong. Please try again.",
+        });
+
+        triggerShake();
+      }
     },
   });
 
   function onSubmit(data: LoginInput) {
+    setBanner(null);
     mutate(data);
   }
 
@@ -143,6 +162,14 @@ export function LoginForm() {
               noValidate
             >
               <FieldGroup className="flex flex-col gap-5">
+                <AnimatePresence mode="wait">
+                  {banner && (
+                    <AlertBanner key="banner" variant={banner.type}>
+                      {banner.message}
+                    </AlertBanner>
+                  )}
+                </AnimatePresence>
+
                 <Controller
                   name="email"
                   control={form.control}
@@ -154,6 +181,7 @@ export function LoginForm() {
 
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
                         <Input
                           {...field}
                           id="login-email"

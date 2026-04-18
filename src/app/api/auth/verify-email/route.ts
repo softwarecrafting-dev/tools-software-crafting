@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { applyRateLimit, RateLimitError } from "@/lib/middleware/rate-limit";
 import { parseBody, ValidationError } from "@/lib/middleware/validate";
 import {
   InvalidTokenError,
@@ -14,7 +15,16 @@ const VerifyEmailSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
   try {
+    await applyRateLimit(`verify-email:${ip}`, {
+      name: "verify-email",
+      points: 5,
+      duration: 3600,
+    });
+
     const { token } = await parseBody(request, VerifyEmailSchema);
 
     await verifyEmail(token);
@@ -24,6 +34,20 @@ export async function POST(request: NextRequest) {
       message: "Email verified successfully",
     });
   } catch (error) {
+    if (error instanceof RateLimitError) {
+      return Response.json(
+        {
+          success: false,
+          error: "Too many requests. Try again later.",
+          code: "RATE_LIMITED",
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(error.retryAfter) },
+        },
+      );
+    }
+
     if (error instanceof ValidationError) {
       return Response.json(
         {
