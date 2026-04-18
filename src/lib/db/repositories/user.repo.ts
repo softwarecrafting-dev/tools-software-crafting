@@ -4,9 +4,25 @@ import { eq } from "drizzle-orm";
 import type {
   CreateUserInput,
   CreateVerificationTokenInput,
+  SafeUser,
   UserRecord,
   VerificationTokenRecord,
 } from "./types";
+
+export function mapToSafeUser(user: UserRecord): SafeUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    emailVerified: user.emailVerified,
+    onboardingDone: user.onboardingDone,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    avatarUrl: user.avatarUrl,
+    isActive: user.isActive,
+  };
+}
 
 export async function findUserByEmail(
   email: string,
@@ -23,11 +39,7 @@ export async function findUserByEmail(
 export async function findUserById(
   id: string,
 ): Promise<UserRecord | undefined> {
-  const [user] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, id))
-    .limit(1);
+  const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
 
   return user;
 }
