@@ -21,3 +21,13 @@ export const RegisterSchema = z
   });
 
 export type RegisterInput = z.infer<typeof RegisterSchema>;
+
+export const LoginSchema = z.object({
+  email: z.email("Enter a valid email address"),
+  password: z
+    .string()
+    .min(1, "Password is required")
+    .max(128, "Password must be at most 128 characters"),
+});
+
+export type LoginInput = z.infer<typeof LoginSchema>;

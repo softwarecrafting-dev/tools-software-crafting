@@ -1,8 +1,8 @@
+import { ReactQueryProvider } from "@/lib/providers/query-provider";
+import { ThemeProvider } from "@/lib/providers/theme-provider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "sonner";
-import { ReactQueryProvider } from "@/lib/providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -34,7 +34,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
-            <Toaster position="bottom-right" richColors closeButton />
+            <Toaster />
           </ThemeProvider>
         </ReactQueryProvider>
       </body>
