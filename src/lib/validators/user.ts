@@ -14,6 +14,9 @@ export const RegisterSchema = z
       .min(4, "Password must be at least 8 characters")
       .max(128, "Password must be at most 128 characters"),
     confirmPassword: z.string(),
+    terms: z.boolean().refine((value) => value === true, {
+      message: "You must agree to the terms and conditions",
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

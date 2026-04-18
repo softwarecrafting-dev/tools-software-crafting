@@ -3,6 +3,8 @@ import {
   verificationTokens,
   sessions,
   passwordResetTokens,
+  emailLogs,
+  auditLogs,
 } from "@/lib/db/schema";
 
 export type CreateUserInput = typeof users.$inferInsert;
@@ -18,3 +20,9 @@ export type Session = typeof sessions.$inferSelect;
 
 export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
 export type PasswordResetTokenRecord = typeof passwordResetTokens.$inferSelect;
+
+export type NewEmailLog = typeof emailLogs.$inferInsert;
+export type EmailLogRecord = typeof emailLogs.$inferSelect;
+
+export type NewAuditLog = typeof auditLogs.$inferInsert;
+export type AuditLogRecord = typeof auditLogs.$inferSelect;

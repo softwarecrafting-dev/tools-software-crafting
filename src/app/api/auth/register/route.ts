@@ -17,9 +17,14 @@ export async function POST(request: NextRequest) {
       duration: 3600,
     });
 
+    const userAgent = request.headers.get("user-agent") ?? undefined;
     const body = await parseBody(request, RegisterSchema);
 
-    const { user } = await register(body);
+    const { user } = await register({
+      ...body,
+      ipAddress: ip,
+      userAgent,
+    });
 
     logger.info("User registered", { userId: user.id, route: "/api/auth/register" });
 

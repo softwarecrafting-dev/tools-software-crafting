@@ -25,9 +25,13 @@ export async function POST(request: NextRequest) {
       duration: 3600,
     });
 
+    const userAgent = request.headers.get("user-agent") ?? undefined;
     const { token } = await parseBody(request, VerifyEmailSchema);
 
-    await verifyEmail(token);
+    await verifyEmail(token, {
+      ipAddress: ip,
+      userAgent,
+    });
 
     return Response.json({
       success: true,

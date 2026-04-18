@@ -50,7 +50,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await resetPassword(token, password);
+    const userAgent = request.headers.get("user-agent") ?? undefined;
+
+    await resetPassword(token, password, {
+      ipAddress: ip,
+      userAgent,
+    });
 
     logger.info("Password reset successfully", {
       route: "/api/auth/reset-password",

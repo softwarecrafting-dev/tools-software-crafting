@@ -74,6 +74,14 @@ export async function deleteVerificationToken(id: string): Promise<void> {
   await db.delete(verificationTokens).where(eq(verificationTokens.id, id));
 }
 
+export async function deleteVerificationTokensByIdentifier(
+  identifier: string,
+): Promise<void> {
+  await db
+    .delete(verificationTokens)
+    .where(eq(verificationTokens.identifier, identifier));
+}
+
 export async function markUserEmailVerified(userId: string): Promise<void> {
   await db
     .update(users)

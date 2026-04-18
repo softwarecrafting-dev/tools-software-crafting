@@ -2,6 +2,7 @@ import {
   boolean,
   index,
   integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -116,3 +117,59 @@ export const passwordResetTokens = pgTable(
 
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+
+export const emailLogs = pgTable(
+  "email_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    type: text("type").notNull(), // 'invoice' | 'verification' | 'password_reset'
+    toEmail: text("to_email").notNull(),
+    subject: text("subject").notNull(),
+    resendId: text("resend_id"),
+    status: text("status").notNull().default("sent"), // 'sent' | 'delivered' | 'bounced' | 'failed'
+    referenceId: uuid("reference_id"),
+    referenceType: text("reference_type"),
+    errorMessage: text("error_message"),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("idx_email_logs_user_id").on(table.userId),
+    index("idx_email_logs_to_email").on(table.toEmail),
+    index("idx_email_logs_reference_id").on(table.referenceId),
+    index("idx_email_logs_sent_at").on(table.sentAt),
+  ],
+);
+
+export type EmailLog = typeof emailLogs.$inferSelect;
+export type NewEmailLog = typeof emailLogs.$inferInsert;
+
+export const auditLogs = pgTable(
+  "audit_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(),
+    entityType: text("entity_type"),
+    entityId: uuid("entity_id"),
+    metadata: jsonb("metadata"),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_audit_logs_user_id").on(table.userId),
+    index("idx_audit_logs_action").on(table.action),
+    index("idx_audit_logs_entity_id").on(table.entityId),
+    index("idx_audit_logs_created_at").on(table.createdAt),
+  ],
+);
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type NewAuditLog = typeof auditLogs.$inferInsert;

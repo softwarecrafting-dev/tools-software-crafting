@@ -17,7 +17,15 @@ import * as React from "react";
 import { AlertBanner, BannerVariant } from "../../components/register-form";
 
 export function VerifyPromptCard({ email }: { email: string | null }) {
-  const [rateLimited, setRateLimited] = React.useState(false);
+  const [countdown, setCountdown] = React.useState(0);
+
+  React.useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
 
   const [banner, setBanner] = React.useState<{
     type: BannerVariant;
@@ -46,6 +54,7 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
     },
 
     onSuccess: () => {
+      setCountdown(60);
       setBanner({
         type: "warning",
         message: "Verification email resent. Please check your inbox.",
@@ -54,11 +63,11 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
 
     onError: (error) => {
       if (error.message === "RATE_LIMITED") {
-        setRateLimited(true);
-
+        setCountdown(60);
         setBanner({
           type: "warning",
-          message: "Please wait before requesting another verification email.",
+          message:
+            "Too many requests. Please wait a minute before trying again.",
         });
       } else {
         setBanner({
@@ -106,11 +115,11 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
           <Button
             variant="outline"
             onClick={() => {
-              if (!email || rateLimited) return;
+              if (!email || countdown > 0) return;
               setBanner(null);
               handleResend();
             }}
-            disabled={sending || rateLimited || !email}
+            disabled={sending || countdown > 0 || !email}
             className="w-full"
           >
             {sending ? (
@@ -118,8 +127,8 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
                 <Loader2 size={15} className="animate-spin" />
                 Sending...
               </>
-            ) : rateLimited ? (
-              "Wait before requesting another link"
+            ) : countdown > 0 ? (
+              `Resend in ${countdown}s`
             ) : (
               "Resend verification email"
             )}

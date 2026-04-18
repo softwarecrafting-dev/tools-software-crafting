@@ -6,18 +6,21 @@ import {
 } from "@/lib/db/repositories/password-reset.repo";
 import {
   createSession,
+  deleteSession,
   revokeAllUserSessions,
 } from "@/lib/db/repositories/session.repo";
 import type { SafeUser } from "@/lib/db/repositories/types";
 import {
   createUser,
   createVerificationToken,
+  deleteVerificationTokensByIdentifier,
   findUserByEmail,
   mapToSafeUser,
   updateUserPassword,
 } from "@/lib/db/repositories/user.repo";
 import { logger } from "@/lib/logger";
 import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
+import { logAudit } from "./audit.service";
 import {
   HASH_SALT_ROUNDS,
   PASSWORD_RESET_TOKEN_EXPIRES_IN,
@@ -63,7 +66,7 @@ async function initiateEmailVerification(
   const verificationUrl = routes.auth.verifyEmail(rawToken);
 
   try {
-    await sendVerificationEmail(email, name ?? "there", verificationUrl);
+    await sendVerificationEmail(email, name ?? "there", verificationUrl, userId);
     logger.info("Verification email sent", { userId });
   } catch (emailError) {
     logger.warn("Failed to send verification email", {
@@ -74,7 +77,7 @@ async function initiateEmailVerification(
 }
 
 export async function register(
-  data: RegisterInput,
+  data: RegisterInput & { ipAddress?: string; userAgent?: string },
 ): Promise<{ user: SafeUser }> {
   const existing = await findUserByEmail(data.email);
   if (existing) {
@@ -90,6 +93,13 @@ export async function register(
   });
 
   await initiateEmailVerification(data.email, data.name, newUser.id);
+
+  await logAudit("register", {
+    userId: newUser.id,
+    ipAddress: data.ipAddress,
+    userAgent: data.userAgent,
+    metadata: { email: data.email },
+  });
 
   return { user: mapToSafeUser(newUser) };
 }
@@ -122,12 +132,21 @@ export async function login(
     expiresAt,
   });
 
+  await logAudit("login", {
+    userId: user.id,
+    ipAddress: data.ipAddress,
+    userAgent: data.userAgent,
+  });
+
   logger.info("User logged in", { userId: user.id });
 
   return { user: mapToSafeUser(user), sessionToken };
 }
 
-export async function forgotPassword(email: string): Promise<void> {
+export async function forgotPassword(
+  email: string,
+  options?: { ipAddress?: string; userAgent?: string },
+): Promise<void> {
   const user = await findUserByEmail(email);
 
   if (!user) {
@@ -149,8 +168,15 @@ export async function forgotPassword(email: string): Promise<void> {
   const resetUrl = routes.auth.resetPassword(rawToken);
 
   try {
-    await sendPasswordResetEmail(email, user.name ?? "there", resetUrl);
+    await sendPasswordResetEmail(email, user.name ?? "there", resetUrl, user.id);
     logger.info("Password reset email sent", { userId: user.id });
+
+    await logAudit("password_reset_requested", {
+      userId: user.id,
+      ipAddress: options?.ipAddress,
+      userAgent: options?.userAgent,
+      metadata: { email },
+    });
   } catch (emailError) {
     logger.error("Failed to send password reset email", {
       userId: user.id,
@@ -162,6 +188,7 @@ export async function forgotPassword(email: string): Promise<void> {
 export async function resetPassword(
   token: string,
   passwordHash: string,
+  options?: { ipAddress?: string; userAgent?: string },
 ): Promise<void> {
   const record = await findPasswordResetToken(token);
 
@@ -181,8 +208,61 @@ export async function resetPassword(
 
     await updateUserPassword(record.userId, newHash);
     await revokeAllUserSessions(record.userId);
+
+    await logAudit("password_change", {
+      userId: record.userId,
+      ipAddress: options?.ipAddress,
+      userAgent: options?.userAgent,
+    });
+
     logger.info("Password reset successfully", { userId: record.userId });
   } finally {
     await deletePasswordResetToken(record.id);
   }
+}
+
+export async function resendVerification(
+  email: string,
+  options?: { ipAddress?: string; userAgent?: string },
+): Promise<void> {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    logger.info("Resend verification requested for non-existent user", {
+      email,
+    });
+    return;
+  }
+
+  if (user.emailVerified) {
+    logger.info("Resend verification requested for already verified user", {
+      userId: user.id,
+    });
+    return;
+  }
+
+  await deleteVerificationTokensByIdentifier(email);
+  await initiateEmailVerification(email, user.name, user.id);
+
+  await logAudit("resend_verification", {
+    userId: user.id,
+    ipAddress: options?.ipAddress,
+    userAgent: options?.userAgent,
+    metadata: { email },
+  });
+}
+
+export async function logout(
+  sessionId: string,
+  options?: { userId?: string; ipAddress?: string; userAgent?: string },
+): Promise<void> {
+  await deleteSession(sessionId);
+
+  await logAudit("logout", {
+    userId: options?.userId,
+    ipAddress: options?.ipAddress,
+    userAgent: options?.userAgent,
+  });
+
+  logger.info("User logged out", { userId: options?.userId });
 }

@@ -155,7 +155,13 @@ export function RegisterForm() {
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
-    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      terms: false,
+    },
     mode: "onBlur",
   });
 
@@ -352,41 +358,47 @@ export function RegisterForm() {
                 />
 
                 <Controller
-                  name={"terms" as keyof RegisterInput}
+                  name="terms"
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field
                       orientation="horizontal"
                       data-invalid={fieldState.invalid}
-                      className="items-center  mt-2"
+                      className="items-start mt-2"
                     >
                       <Checkbox
                         id="reg-terms"
                         checked={!!field.value}
                         onCheckedChange={field.onChange}
                         aria-invalid={fieldState.invalid}
+                        className="mt-1"
                       />
-                      <FieldLabel
-                        htmlFor="reg-terms"
-                        className="text-sm font-normal leading-relaxed"
-                      >
-                        I agree to the{" "}
-                        <Link
-                          href="/terms"
-                          target="_blank"
-                          className="text-primary underline underline-offset-2"
+                      <div className="flex flex-col gap-1.5">
+                        <FieldLabel
+                          htmlFor="reg-terms"
+                          className="text-sm font-normal leading-relaxed"
                         >
-                          Terms of Service
-                        </Link>{" "}
-                        and{" "}
-                        <Link
-                          href="/privacy"
-                          target="_blank"
-                          className="text-primary underline underline-offset-2"
-                        >
-                          Privacy Policy
-                        </Link>
-                      </FieldLabel>
+                          I agree to the{" "}
+                          <Link
+                            href="/terms"
+                            target="_blank"
+                            className="text-primary underline underline-offset-2"
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link
+                            href="/privacy"
+                            target="_blank"
+                            className="text-primary underline underline-offset-2"
+                          >
+                            Privacy Policy
+                          </Link>
+                        </FieldLabel>
+                        {fieldState.invalid && (
+                          <FieldError errors={[fieldState.error]} />
+                        )}
+                      </div>
                     </Field>
                   )}
                 />

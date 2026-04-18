@@ -1,10 +1,11 @@
 import {
+  markUserEmailVerified,
   deleteVerificationToken,
   findUserByEmail,
   findVerificationToken,
-  markUserEmailVerified,
 } from "@/lib/db/repositories/user.repo";
 import { logger } from "@/lib/logger";
+import { logAudit } from "./audit.service";
 
 export class InvalidTokenError extends Error {
   constructor() {
@@ -27,7 +28,10 @@ export class UserAlreadyVerifiedError extends Error {
   }
 }
 
-export async function verifyEmail(tokenString: string) {
+export async function verifyEmail(
+  tokenString: string,
+  options?: { ipAddress?: string; userAgent?: string },
+) {
   const token = await findVerificationToken(tokenString);
 
   if (!token) {
@@ -50,6 +54,12 @@ export async function verifyEmail(tokenString: string) {
 
   await markUserEmailVerified(user.id);
   await deleteVerificationToken(token.id);
+
+  await logAudit("email_verified", {
+    userId: user.id,
+    ipAddress: options?.ipAddress,
+    userAgent: options?.userAgent,
+  });
 
   logger.info("User email verified", { userId: user.id });
 
