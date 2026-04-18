@@ -1,4 +1,6 @@
+import { getSession } from "@/lib/auth";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { VerifyPromptCard } from "./components/verify-prompt-card";
 
 export const metadata: Metadata = {
@@ -12,6 +14,12 @@ interface PageProps {
 }
 
 export default async function VerifyPromptPage({ searchParams }: PageProps) {
+  const session = await getSession();
+
+  if (session.userId) {
+    redirect("/dashboard");
+  }
+
   const { email } = await searchParams;
   const displayEmail = email ? decodeURIComponent(email) : null;
 

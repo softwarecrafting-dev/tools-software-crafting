@@ -5,6 +5,6 @@ import { env } from "@/lib/env";
 
 const connectionString = env.DATABASE_URL;
 
-const client = postgres(connectionString, { prepare: false });
+export const client = postgres(connectionString, { prepare: false });
 
 export const db = drizzle(client, { schema });

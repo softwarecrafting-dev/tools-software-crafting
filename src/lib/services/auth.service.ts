@@ -1,16 +1,24 @@
-import { VerificationEmail } from "@/emails/verification-email";
+import {
+  createPasswordResetToken,
+  deletePasswordResetToken,
+  deleteUserPasswordResetTokens,
+  findPasswordResetToken,
+} from "@/lib/db/repositories/password-reset.repo";
+import {
+  createSession,
+  revokeAllUserSessions,
+} from "@/lib/db/repositories/session.repo";
 import type { SafeUser } from "@/lib/db/repositories/types";
 import {
   createUser,
   createVerificationToken,
   findUserByEmail,
+  updateUserPassword,
 } from "@/lib/db/repositories/user.repo";
-import { createSession } from "@/lib/db/repositories/session.repo";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
-import { resend } from "@/lib/resend";
-import type { RegisterInput, LoginInput } from "@/lib/validators/user";
-import { render } from "@react-email/components";
+import { sendPasswordResetEmail, sendVerificationEmail } from "@/lib/mail";
+import type { LoginInput, RegisterInput } from "@/lib/validators/user";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { nanoid } from "nanoid";
@@ -26,6 +34,20 @@ export class InvalidCredentialsError extends Error {
   constructor() {
     super("Invalid email or password.");
     this.name = "InvalidCredentialsError";
+  }
+}
+
+export class TokenExpiredError extends Error {
+  constructor() {
+    super("The token has expired.");
+    this.name = "TokenExpiredError";
+  }
+}
+
+export class InvalidTokenError extends Error {
+  constructor() {
+    super("The token is invalid.");
+    this.name = "InvalidTokenError";
   }
 }
 
@@ -83,15 +105,12 @@ export async function register(
   const verificationUrl = `${env.NEXT_PUBLIC_APP_URL}/verify-email/${rawToken}`;
 
   try {
-    const html = await render(
-      VerificationEmail({ name: data.name, verificationUrl }),
+    await sendVerificationEmail(
+      data.email,
+      data.name ?? "there",
+      verificationUrl,
     );
-    await resend.emails.send({
-      from: "Acme <onboarding@resend.dev>",
-      to: data.email,
-      subject: "Verify your email - SoftwareCrafting Tools",
-      html,
-    });
+
     logger.info("Verification email sent", { userId: newUser.id });
   } catch (emailError) {
     logger.warn("Failed to send verification email", {
@@ -103,14 +122,19 @@ export async function register(
   return { user: buildSafeUser(newUser) };
 }
 
-export async function login(data: LoginInput & { ipAddress?: string; userAgent?: string }): Promise<{ user: SafeUser; sessionToken: string }> {
+export async function login(
+  data: LoginInput & { ipAddress?: string; userAgent?: string },
+): Promise<{ user: SafeUser; sessionToken: string }> {
   const user = await findUserByEmail(data.email);
-  
+
   if (!user || !user.isActive || !user.passwordHash) {
     throw new InvalidCredentialsError();
   }
 
-  const isValidPassword = await bcrypt.compare(data.password, user.passwordHash);
+  const isValidPassword = await bcrypt.compare(
+    data.password,
+    user.passwordHash,
+  );
   if (!isValidPassword) {
     throw new InvalidCredentialsError();
   }
@@ -129,4 +153,61 @@ export async function login(data: LoginInput & { ipAddress?: string; userAgent?:
   logger.info("User logged in", { userId: user.id });
 
   return { user: buildSafeUser(user), sessionToken };
+}
+
+export async function forgotPassword(email: string): Promise<void> {
+  const user = await findUserByEmail(email);
+
+  if (!user) {
+    logger.info("Forgot password requested for non-existent user", { email });
+    return;
+  }
+
+  await deleteUserPasswordResetTokens(user.id);
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await createPasswordResetToken({
+    userId: user.id,
+    token: rawToken,
+    expiresAt,
+  });
+
+  const resetUrl = `${env.NEXT_PUBLIC_APP_URL}/reset-password/${rawToken}`;
+
+  try {
+    await sendPasswordResetEmail(email, user.name ?? "there", resetUrl);
+
+    logger.info("Password reset email sent", { userId: user.id });
+  } catch (emailError) {
+    logger.error("Failed to send password reset email", {
+      userId: user.id,
+      error: emailError,
+    });
+  }
+}
+
+export async function resetPassword(
+  token: string,
+  passwordHash: string,
+): Promise<void> {
+  const record = await findPasswordResetToken(token);
+
+  if (!record) {
+    throw new InvalidTokenError();
+  }
+
+  if (new Date() > record.expiresAt) {
+    await deletePasswordResetToken(record.id);
+    throw new TokenExpiredError();
+  }
+
+  const newHash = await bcrypt.hash(passwordHash, 12);
+
+  await updateUserPassword(record.userId, newHash);
+  await revokeAllUserSessions(record.userId);
+  await deletePasswordResetToken(record.id);
+
+  logger.info("Password reset successfully", { userId: record.userId });
 }

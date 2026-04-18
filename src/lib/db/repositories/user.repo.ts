@@ -20,6 +20,18 @@ export async function findUserByEmail(
   return user;
 }
 
+export async function findUserById(
+  id: string,
+): Promise<UserRecord | undefined> {
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+
+  return user;
+}
+
 export async function createUser(data: CreateUserInput): Promise<UserRecord> {
   const [user] = await db.insert(users).values(data).returning();
 
@@ -54,5 +66,15 @@ export async function markUserEmailVerified(userId: string): Promise<void> {
   await db
     .update(users)
     .set({ emailVerified: true, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
+export async function updateUserPassword(
+  userId: string,
+  passwordHash: string,
+): Promise<void> {
+  await db
+    .update(users)
+    .set({ passwordHash, updatedAt: new Date() })
     .where(eq(users.id, userId));
 }

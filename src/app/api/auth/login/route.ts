@@ -10,7 +10,10 @@ export async function POST(request: NextRequest) {
   try {
     const data = await parseBody(request, LoginSchema);
 
-    const ipAddress = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    // const ipAddress = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const ipAddress =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "unknown";
     const userAgent = request.headers.get("user-agent") ?? undefined;
 
     await applyRateLimit(ipAddress, {

@@ -31,3 +31,24 @@ export const LoginSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof LoginSchema>;
+
+export const ForgotPasswordSchema = z.object({
+  email: z.email("Enter a valid email address"),
+});
+
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
+
+export const ResetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(4, "Password must be at least 4 characters")
+      .max(128, "Password must be at most 128 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>;

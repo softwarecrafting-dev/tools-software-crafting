@@ -1,4 +1,9 @@
-import { users, verificationTokens, sessions } from "@/lib/db/schema";
+import {
+  users,
+  verificationTokens,
+  sessions,
+  passwordResetTokens,
+} from "@/lib/db/schema";
 
 export type CreateUserInput = typeof users.$inferInsert;
 export type UserRecord = typeof users.$inferSelect;
@@ -10,3 +15,6 @@ export type VerificationTokenRecord = typeof verificationTokens.$inferSelect;
 
 export type NewSession = typeof sessions.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
+
+export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+export type PasswordResetTokenRecord = typeof passwordResetTokens.$inferSelect;

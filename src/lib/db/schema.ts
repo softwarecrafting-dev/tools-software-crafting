@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -84,3 +85,34 @@ export const sessions = pgTable(
 
 export type Session = typeof sessions.$inferSelect;
 export type NewSession = typeof sessions.$inferInsert;
+
+export const rateLimits = pgTable("rate_limits", {
+  key: text("key").primaryKey(),
+  points: integer("points").notNull(),
+  expire: timestamp("expire", { withTimezone: true }),
+});
+
+export type RateLimit = typeof rateLimits.$inferSelect;
+export type NewRateLimit = typeof rateLimits.$inferInsert;
+
+export const passwordResetTokens = pgTable(
+  "password_reset_tokens",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    token: text("token").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_password_reset_tokens_user_id").on(table.userId),
+    index("idx_password_reset_tokens_token").on(table.token),
+  ],
+);
+
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type NewPasswordResetToken = typeof passwordResetTokens.$inferInsert;

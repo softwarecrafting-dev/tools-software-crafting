@@ -27,3 +27,5 @@ export async function deleteSession(token: string): Promise<void> {
 export async function deleteUserSessions(userId: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.userId, userId));
 }
+
+export const revokeAllUserSessions = deleteUserSessions;

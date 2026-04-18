@@ -46,7 +46,7 @@ const strengthColors: Record<PasswordStrength, string> = {
   4: "bg-green-500",
 };
 
-function computeStrength(password: string): PasswordStrength {
+export function computeStrength(password: string): PasswordStrength {
   if (!password) return 0;
   let score = 0;
   if (password.length >= 8) score++;
@@ -56,7 +56,7 @@ function computeStrength(password: string): PasswordStrength {
   return Math.min(score, 4) as PasswordStrength;
 }
 
-function PasswordStrengthBar({ password }: { password: string }) {
+export function PasswordStrengthBar({ password }: { password: string }) {
   const strength = computeStrength(password);
   if (!password) return null;
   return (
@@ -90,7 +90,7 @@ function PasswordStrengthBar({ password }: { password: string }) {
   );
 }
 
-function PasswordInput({
+export function PasswordInput({
   id,
   placeholder,
   ...props
