@@ -29,6 +29,13 @@
       "when": 1776536365890,
       "tag": "0003_acoustic_dexter_bennett",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776537708663,
+      "tag": "0004_glorious_vivisector",
+      "breakpoints": true
     }
   ]
 }

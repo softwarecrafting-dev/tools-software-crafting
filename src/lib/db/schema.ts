@@ -3,6 +3,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   text,
   timestamp,
@@ -173,3 +174,46 @@ export const auditLogs = pgTable(
 
 export type AuditLog = typeof auditLogs.$inferSelect;
 export type NewAuditLog = typeof auditLogs.$inferInsert;
+
+export const userSettings = pgTable(
+  "user_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: "cascade" }),
+    businessName: text("business_name"),
+    businessAddress: text("business_address"),
+    businessEmail: text("business_email"),
+    businessPhone: text("business_phone"),
+    gstin: text("gstin"),
+    pan: text("pan"),
+    bankName: text("bank_name"),
+    bankAccountNumber: text("bank_account_number"),
+    bankIfsc: text("bank_ifsc"),
+    bankUpiId: text("bank_upi_id"),
+    logoUrl: text("logo_url"), // Cloudflare R2 URL
+    signatureUrl: text("signature_url"), // R2 URL for saved signature image
+    defaultCurrency: text("default_currency").notNull().default("INR"),
+    defaultTaxRate: numeric("default_tax_rate", {
+      precision: 5,
+      scale: 2,
+    })
+      .notNull()
+      .default("18.00"),
+    invoicePrefix: text("invoice_prefix").notNull().default("INV"),
+    defaultPaymentTerms: text("default_payment_terms"),
+    defaultNotes: text("default_notes"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("idx_user_settings_user_id").on(table.userId)],
+);
+
+export type UserSettings = typeof userSettings.$inferSelect;
+export type NewUserSettings = typeof userSettings.$inferInsert;

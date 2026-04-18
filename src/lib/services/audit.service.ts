@@ -17,6 +17,7 @@ export type AuditAction =
   | "settings_updated"
   | "password_reset_requested"
   | "resend_verification"
+  | "onboarding_completed"
   | "account_deleted";
 
 export interface AuditOptions {

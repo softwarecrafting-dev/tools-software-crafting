@@ -5,6 +5,7 @@ import {
   passwordResetTokens,
   emailLogs,
   auditLogs,
+  userSettings,
 } from "@/lib/db/schema";
 
 export type CreateUserInput = typeof users.$inferInsert;
@@ -26,3 +27,6 @@ export type EmailLogRecord = typeof emailLogs.$inferSelect;
 
 export type NewAuditLog = typeof auditLogs.$inferInsert;
 export type AuditLogRecord = typeof auditLogs.$inferSelect;
+
+export type NewUserSettings = typeof userSettings.$inferInsert;
+export type UserSettingsRecord = typeof userSettings.$inferSelect;

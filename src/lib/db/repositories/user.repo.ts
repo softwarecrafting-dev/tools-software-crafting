@@ -98,3 +98,13 @@ export async function updateUserPassword(
     .set({ passwordHash, updatedAt: new Date() })
     .where(eq(users.id, userId));
 }
+
+export async function updateOnboardingStatus(
+  userId: string,
+  done: boolean,
+): Promise<void> {
+  await db
+    .update(users)
+    .set({ onboardingDone: done, updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
