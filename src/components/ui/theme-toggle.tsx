@@ -3,21 +3,19 @@
 import { Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { Button } from "./button";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
 
-  // Avoid hydration mismatch — only render after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
+  if (!resolvedTheme) {
     return (
-      <Button variant="ghost" size="icon" aria-label="Toggle theme" disabled>
+      <Button
+        size="icon"
+        aria-label="Toggle theme"
+        disabled
+        className="flex items-center justify-center rounded-lg text-muted-foreground"
+      >
         <span className="size-4" />
       </Button>
     );
@@ -27,11 +25,18 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant="ghost"
       size="icon"
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      variant="ghost"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="relative overflow-hidden"
+      className="
+        relative overflow-hidden
+        flex items-center justify-center
+        rounded-lg
+        text-muted-foreground
+        transition-colors
+        hover:bg-accent hover:text-accent-foreground
+      "
     >
       <AnimatePresence mode="wait" initial={false}>
         {isDark ? (
@@ -43,7 +48,7 @@ export function ThemeToggle() {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <Moon className="size-4" />
+            <Moon className="h-5 w-5" />
           </motion.span>
         ) : (
           <motion.span
@@ -54,7 +59,7 @@ export function ThemeToggle() {
             transition={{ duration: 0.2, ease: "easeInOut" }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            <Sun className="size-4" />
+            <Sun className="h-5 w-5" />
           </motion.span>
         )}
       </AnimatePresence>

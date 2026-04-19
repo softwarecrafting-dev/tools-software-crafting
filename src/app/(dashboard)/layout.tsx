@@ -22,19 +22,20 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar className="hidden md:flex" />
+      <Sidebar
+        user={{
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+        }}
+        className="hidden md:flex"
+      />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header
-          user={{
-            name: user.name,
-            email: user.email,
-            avatarUrl: user.avatarUrl,
-          }}
-        />
+      <div className="flex flex0 flex-col overflow-hidden">
+        <Header />
 
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-          <div className="mx-auto max-w-7xl space-y-8">{children}</div>
+        <main className="flex0 overflow-y-auto p-6 md:p-8 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+          <div className="mx-auto max-w-6xl space-y-8">{children}</div>
         </main>
       </div>
     </div>

@@ -1,35 +1,41 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/ui/search-input";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Search } from "lucide-react";
-import { UserNav } from "./user-nav";
+import * as React from "react";
 
-interface HeaderProps {
-  user: {
-    name?: string | null;
-    email: string;
-    avatarUrl?: string | null;
+export function Header() {
+  const [searchValue, setSearchValue] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const handleSearch = (val: string) => {
+    setSearchValue(val);
+    if (val) {
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
+    } else {
+      setIsLoading(false);
+    }
   };
-}
 
-export function Header({ user }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b bg-background/95 px-6 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between bg-background/60 px-6 backdrop-blur-lg supports-backdrop-filter:bg-background/60 border-b">
       <div className="flex flex-1 items-center gap-4">
-        <div className="relative w-full max-w-sm hidden md:block">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
+        <div className="hidden md:block w-full max-w-sm">
+          <SearchInput
             placeholder="Search invoices, clients..."
-            className="pl-9 bg-muted/40 transition-all hover:bg-muted/80 focus:bg-background"
+            value={searchValue}
+            onChange={(e) => handleSearch(e.target.value)}
+            onClear={() => handleSearch("")}
+            isLoading={isLoading}
           />
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         <ThemeToggle />
-        <UserNav user={user} />
       </div>
     </header>
   );
