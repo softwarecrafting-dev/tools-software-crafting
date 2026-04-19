@@ -6,6 +6,7 @@ import {
   emailLogs,
   auditLogs,
   userSettings,
+  invoices,
 } from "@/lib/db/schema";
 
 export type CreateUserInput = typeof users.$inferInsert;
@@ -30,3 +31,6 @@ export type AuditLogRecord = typeof auditLogs.$inferSelect;
 
 export type NewUserSettings = typeof userSettings.$inferInsert;
 export type UserSettingsRecord = typeof userSettings.$inferSelect;
+
+export type NewInvoice = typeof invoices.$inferInsert;
+export type InvoiceRecord = typeof invoices.$inferSelect;

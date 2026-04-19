@@ -31,3 +31,23 @@ export async function parseBody<T>(
 
   return result.data;
 }
+export async function parseQuery<T>(
+  request: Request,
+  schema: ZodSchema<T>,
+): Promise<T> {
+  const url = new URL(request.url);
+  const raw = Object.fromEntries(url.searchParams.entries());
+
+  const result = schema.safeParse(raw);
+
+  if (!result.success) {
+    const details = result.error.issues.map((e) => ({
+      field: e.path.join("."),
+      message: e.message,
+    }));
+
+    throw new ValidationError(details);
+  }
+
+  return result.data;
+}

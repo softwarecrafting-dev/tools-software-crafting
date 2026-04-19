@@ -3,12 +3,20 @@
 import { Moon, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 import { Button } from "./button";
 
 export function ThemeToggle() {
+  const [mounted, setMounted] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
 
-  if (!resolvedTheme) {
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 0);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!mounted || !resolvedTheme) {
     return (
       <Button
         size="icon"

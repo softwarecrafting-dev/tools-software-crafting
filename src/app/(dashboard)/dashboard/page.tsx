@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { DashboardOverview } from "./components/dashboard-overview";
+import { DashboardOverview } from "../components/dashboard-overview";
 
 export const metadata: Metadata = {
   title: "Dashboard | SoftwareCrafting Tools",

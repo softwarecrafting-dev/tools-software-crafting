@@ -23,6 +23,7 @@ export default async function DashboardLayout({
         <SidebarInset className="relative flex-1 flex-col overflow-hidden">
           <div className="container mx-auto px-4">
             <DashboardHeader />
+
             <main className="relative flex-1 pt-2 overflow-y-auto">
               {children}
             </main>

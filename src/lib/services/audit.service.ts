@@ -14,6 +14,8 @@ export type AuditAction =
   | "invoice_sent"
   | "invoice_marked_paid"
   | "invoice_duplicated"
+  | "invoice_list_viewed"
+  | "invoice_viewed"
   | "settings_updated"
   | "password_reset_requested"
   | "resend_verification"

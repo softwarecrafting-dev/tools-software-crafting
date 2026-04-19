@@ -52,7 +52,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
 
         <div className="absolute inset-y-0 right-0 flex items-center justify-center pr-1">
           {isLoading ? (
-            <div className="flex size-8 items-center justify-center text-muted-foreground mr-2">
+            <div className="flex size-8 items-center justify-center text-muted-foreground ">
               <LoaderCircle className="size-4 animate-spin" />
               <span className="sr-only">Loading...</span>
             </div>

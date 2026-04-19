@@ -217,3 +217,64 @@ export const userSettings = pgTable(
 
 export type UserSettings = typeof userSettings.$inferSelect;
 export type NewUserSettings = typeof userSettings.$inferInsert;
+
+export const invoices = pgTable(
+  "invoices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    invoiceNumber: text("invoice_number").notNull(),
+    clientName: text("client_name").notNull(),
+    clientEmail: text("client_email").notNull(),
+    clientCompany: text("client_company"),
+    clientAddress: text("client_address"),
+    clientGstin: text("client_gstin"),
+    poNumber: text("po_number"),
+    currency: text("currency").notNull().default("INR"),
+    issueDate: timestamp("issue_date", { withTimezone: true }).notNull(),
+    dueDate: timestamp("due_date", { withTimezone: true }).notNull(),
+    lineItems: jsonb("line_items").notNull().default([]),
+    subtotal: numeric("subtotal", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    taxRate: numeric("tax_rate", { precision: 5, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    taxAmount: numeric("tax_amount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    discountType: text("discount_type"), // 'percentage' | 'fixed'
+    discountValue: numeric("discount_value", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    discountAmount: numeric("discount_amount", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    total: numeric("total", { precision: 12, scale: 2 })
+      .notNull()
+      .default("0.00"),
+    status: text("status").notNull().default("draft"), // 'draft' | 'sent' | 'viewed' | 'paid' | 'overdue' | 'cancelled'
+    pdfUrl: text("pdf_url"),
+    notes: text("notes"),
+    terms: text("terms"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("idx_invoices_user_id").on(table.userId),
+    index("idx_invoices_status").on(table.status),
+    index("idx_invoices_invoice_number").on(table.invoiceNumber),
+    index("idx_invoices_created_at").on(table.createdAt),
+    index("idx_invoices_deleted_at").on(table.deletedAt),
+  ],
+);
+
+export type Invoice = typeof invoices.$inferSelect;
+export type NewInvoice = typeof invoices.$inferInsert;
