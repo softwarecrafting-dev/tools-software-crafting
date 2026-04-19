@@ -2,6 +2,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { DashboardHeader } from "./components/dashboard-header";
+import { DashboardSidebar } from "./components/dashboard-sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -16,15 +17,10 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="relative flex min-h-screen w-full  overflow-hidden">
-        {/* <Sidebar /> */}
+      <div className="relative flex min-h-screen w-full overflow-hidden">
+        <DashboardSidebar />
 
         <SidebarInset className="relative flex-1 flex-col overflow-hidden">
-          {/* <div
-            className="absolute inset-x-0 top-0 h-[400px] bg-foreground  "
-            aria-hidden="true"
-          /> */}
-
           <div className="container mx-auto px-4">
             <DashboardHeader />
             <main className="relative flex-1 pt-2 overflow-y-auto">

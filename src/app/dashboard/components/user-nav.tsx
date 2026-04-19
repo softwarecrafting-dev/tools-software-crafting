@@ -129,7 +129,7 @@ export function UserNav({ user, isLoading }: UserNavProps) {
           </DropdownMenuItem>
         </DropdownMenuGroup> */}
 
-        <DropdownMenuSeparator className="my-2 opacity-50" />
+        {/* <DropdownMenuSeparator className="my-2 opacity-50" /> */}
 
         <DropdownMenuItem onClick={() => logout.mutate()} variant="destructive">
           <LogOutIcon className=" h-4 w-4" />
