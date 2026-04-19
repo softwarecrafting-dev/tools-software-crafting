@@ -230,7 +230,7 @@ export function RegisterForm() {
       className="w-full max-w-lg"
     >
       <motion.div animate={shake ? { x: [0, -8, 8, -6, 6, 0] } : {}}>
-        <Card className="shadow-lg border-border/60">
+        <Card className="shadow-lg ">
           <CardHeader className="text-center space-y-1">
             <p className="text-lg font-semibold tracking-tight text-primary">
               SoftwareCrafting
@@ -249,7 +249,7 @@ export function RegisterForm() {
               onSubmit={form.handleSubmit(onSubmit)}
               noValidate
             >
-              <FieldGroup className="flex flex-col gap-5">
+              <FieldGroup className="flex flex-col gap-3">
                 <AnimatePresence mode="wait">
                   {banner && (
                     <AlertBanner key="banner" variant={banner.type}>

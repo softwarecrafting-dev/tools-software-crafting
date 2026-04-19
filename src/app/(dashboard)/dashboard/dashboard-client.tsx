@@ -7,10 +7,6 @@ import { ArrowUpRight, Clock, DollarSign, FileText, Users } from "lucide-react";
 import Link from "next/link";
 import { StatCard } from "./components/stat-cards";
 
-/**
- * We use a separate interior component if we wanted to pre-fetch on the server,
- * but for now we'll handle it all in one client component for simplicity.
- */
 export default function DashboardClient() {
   const { data: stats, isLoading, isError } = useDashboardStats();
 

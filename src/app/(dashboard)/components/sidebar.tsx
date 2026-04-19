@@ -5,14 +5,10 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogoutDialog } from "@/components/ui/logout-dialog";
-import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -21,20 +17,22 @@ import {
 import { cn } from "@/lib/utils";
 import { getInitials } from "@/lib/utils/user";
 import {
-  BellIcon,
-  CreditCardIcon,
-  FileText,
   LayoutDashboard,
-  PanelRightClose,
-  PanelRightOpen,
-  Settings,
-  SettingsIcon,
-  UserIcon,
+  FileText,
   Users,
+  Settings,
+  PlusIcon,
+  ChevronRight,
+  ChevronDown,
+  CreditCardIcon,
+  UserIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
+import { useSidebar } from "@/components/providers/sidebar-provider";
+import { motion, AnimatePresence } from "framer-motion";
+import { LogoutDialog } from "@/components/ui/logout-dialog";
 
 interface SidebarProps {
   className?: string;
@@ -47,9 +45,24 @@ interface SidebarProps {
 
 const navItems = [
   {
-    title: "Dashboard",
+    title: "Home",
     href: "/dashboard",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Wallet Management",
+    href: "/wallet",
+    icon: CreditCardIcon,
+    children: [
+      { title: "Account Overview", href: "/wallet/overview" },
+      { title: "Available Funds", href: "/wallet/funds" },
+      { title: "Transaction History", href: "/wallet/history" },
+    ],
+  },
+  {
+    title: "Deposit Funds",
+    href: "/deposit",
+    icon: PlusIcon,
   },
   {
     title: "Invoices",
@@ -68,140 +81,193 @@ const navItems = [
   },
 ];
 
+const mockedRecipients = [
+  { name: "Liam Anderson", avatar: "" },
+  { name: "Emma Smith", avatar: "" },
+  { name: "Ethan Bennett", avatar: "" },
+  { name: "Olivia Morgan", avatar: "" },
+];
+
 export function Sidebar({ className, user }: SidebarProps) {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const { isCollapsed } = useSidebar();
+  const [openMenus, setOpenMenus] = React.useState<string[]>(["Wallet Management"]);
 
   const initials = getInitials(user.name, user.email);
 
-  const userMenuItems = [
-    { icon: UserIcon, label: "Profile", href: "/settings" },
-    { icon: SettingsIcon, label: "Settings", href: "/settings" },
-    { icon: CreditCardIcon, label: "Billing", href: "/settings" },
-    { icon: BellIcon, label: "Notifications", href: "/settings" },
-  ];
+  const toggleMenu = (title: string) => {
+    setOpenMenus((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+    );
+  };
 
   return (
     <aside
       className={cn(
-        "relative flex flex-col bg-muted/10 transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-16" : "w-64",
-        className,
+        "relative flex flex-col border-r bg-card transition-all duration-300 ease-in-out",
+        isCollapsed ? "w-20" : "w-72",
+        className
       )}
     >
-      <div className="flex h-16 items-center justify-between px-6">
-        {!isCollapsed && (
-          <span className="text-xl font-bold tracking-tight text-primary">
-            SoftwareCrafting
-          </span>
-        )}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className={cn(
-                "h-5 w-5 text-muted-foreground",
-                isCollapsed && "mx-auto",
-              )}
-            >
-              {isCollapsed ? (
-                <PanelRightClose className="h-4 w-4" />
-              ) : (
-                <PanelRightOpen className="h-4 w-4" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">
-            {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          </TooltipContent>
-        </Tooltip>
+      <div className="flex h-20 items-center px-6 md:h-24">
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <LayoutDashboard className="h-6 w-6" />
+          </div>
+          {!isCollapsed && (
+            <span className="text-xl font-bold tracking-tight">
+              SoftwareCrafting
+            </span>
+          )}
+        </Link>
       </div>
 
-      <nav className="flex-1 space-y-2 px-3 py-4">
-        {navItems.map((item) => (
-          <React.Fragment key={item.href}>
-            {item.title === "Settings" && (
-              <Separator className="my-2 bg-muted-foreground/20" />
+      <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-none">
+        <div className="space-y-6">
+          <div>
+            {!isCollapsed && (
+              <h2 className="mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Pages
+              </h2>
             )}
-            <Tooltip delayDuration={0}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={item.href}
+            <nav className="space-y-1">
+              {navItems.map((item) => (
+                <div key={item.title}>
+                  <Tooltip delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => item.children && toggleMenu(item.title)}
+                        className={cn(
+                          "group flex w-full items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all hover:bg-accent",
+                          pathname.startsWith(item.href)
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:text-foreground",
+                          isCollapsed && "justify-center px-0"
+                        )}
+                      >
+                        <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
+                        {!isCollapsed && (
+                          <>
+                            <span className="flex-1 text-left">{item.title}</span>
+                            {item.children && (
+                              <ChevronDown
+                                className={cn(
+                                  "h-4 w-4 transition-transform",
+                                  openMenus.includes(item.title) ? "" : "-rotate-90"
+                                )}
+                              />
+                            )}
+                          </>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    {isCollapsed && (
+                      <TooltipContent side="right">{item.title}</TooltipContent>
+                    )}
+                  </Tooltip>
+                  <AnimatePresence>
+                    {!isCollapsed && item.children && openMenus.includes(item.title) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="ml-9 mt-1 space-y-1 overflow-hidden"
+                      >
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.title}
+                            href={child.href}
+                            className="block rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                          >
+                            {child.title}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            {!isCollapsed && (
+              <h2 className="mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Recipients
+              </h2>
+            )}
+            <div className="space-y-1">
+              {mockedRecipients.map((recipient) => (
+                <button
+                  key={recipient.name}
                   className={cn(
-                    "flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                    pathname.startsWith(item.href)
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground",
-                    isCollapsed && "justify-center px-0",
+                    "group flex w-full items-center rounded-xl px-2 py-2 text-sm font-medium transition-all hover:bg-accent",
+                    isCollapsed && "justify-center px-0"
                   )}
                 >
-                  <item.icon
-                    className={cn("h-4 w-4", !isCollapsed && "mr-1")}
-                  />
-                  {!isCollapsed && <span>{item.title}</span>}
-                </Link>
-              </TooltipTrigger>
-              {isCollapsed && (
-                <TooltipContent
-                  side="right"
-                  className="flex items-center gap-4"
-                >
-                  {item.title}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </React.Fragment>
-        ))}
-      </nav>
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-[10px]">
+                      {recipient.name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  {!isCollapsed && (
+                    <span className="ml-3 text-muted-foreground group-hover:text-foreground">
+                      {recipient.name}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <div className="border-t p-3 space-y-2">
+      <div className="border-t p-4">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               className={cn(
-                "flex h-auto w-full items-center gap-2 rounded-lg px-3 py-2.5 transition-colors ",
-                isCollapsed && "justify-center px-0",
+                "h-auto w-full justify-start gap-3 rounded-xl px-2 py-2 hover:bg-accent",
+                isCollapsed && "justify-center px-0"
               )}
             >
-              <Avatar className="h-9 w-9">
-                <AvatarImage
-                  src={user.avatarUrl || ""}
-                  alt={user.name || "User"}
-                />
-                <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={user.avatarUrl || ""} />
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               {!isCollapsed && (
-                <div className="flex flex-col gap-1 text-start leading-none flex-1 overflow-hidden">
-                  <span className="truncate text-sm font-semibold">
+                <div className="flex flex-1 flex-col items-start gap-0.5 overflow-hidden text-left">
+                  <span className="w-full truncate text-sm font-semibold">
                     {user.name || "User"}
                   </span>
-                  <span className="text-muted-foreground truncate text-xs">
-                    {user.email}
+                  <span className="w-full truncate text-xs text-muted-foreground">
+                    Admin
                   </span>
                 </div>
               )}
+              {!isCollapsed && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64" side="right">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              {userMenuItems.map((item) => (
-                <DropdownMenuItem key={item.label} asChild>
-                  <Link href={item.href} className="flex items-center gap-2">
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuGroup>
+          <DropdownMenuContent align="end" className="w-64 p-2" side="right">
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="flex items-center gap-2">
+                <UserIcon className="h-4 w-4" />
+                <span>My Account</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator className="mx-1" />
+            <DropdownMenuItem asChild>
+              <LogoutDialog />
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <LogoutDialog isCollapsed={isCollapsed} />
       </div>
     </aside>
   );

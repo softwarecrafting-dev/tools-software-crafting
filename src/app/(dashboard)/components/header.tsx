@@ -1,41 +1,48 @@
 "use client";
 
-import { SearchInput } from "@/components/ui/search-input";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import * as React from "react";
+import { useScrollDirection } from "@/hooks/use-scroll-direction";
+import { cn } from "@/lib/utils";
+import { ActivityViewer } from "./activity-viewer";
+import { HeaderGreeting, SidebarToggle } from "./header-greeting";
+import { HeaderSearch } from "./header-search";
+import { LanguageSelector } from "./language-selector";
+import { NotificationsDropdown } from "./notifications-dropdown";
+import { UserNav } from "./user-nav";
 
 export function Header() {
-  const [searchValue, setSearchValue] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  const handleSearch = (val: string) => {
-    setSearchValue(val);
-    if (val) {
-      setIsLoading(true);
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-    } else {
-      setIsLoading(false);
-    }
-  };
+  const { scrollDirection, isAtTop } = useScrollDirection();
+  const isHidden = scrollDirection === "down" && !isAtTop;
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between bg-background/60 px-6 backdrop-blur-lg supports-backdrop-filter:bg-background/60 border-b">
-      <div className="flex flex-1 items-center gap-4">
-        <div className="hidden md:block w-full max-w-sm">
-          <SearchInput
-            placeholder="Search invoices, clients..."
-            value={searchValue}
-            onChange={(e) => handleSearch(e.target.value)}
-            onClear={() => handleSearch("")}
-            isLoading={isLoading}
-          />
-        </div>
+    <header
+      className={cn(
+        " flex h-20 w-full items-center justify-between bg-transparent px-6 transition-transform duration-300 ease-in-out md:h-24 py-4",
+        isHidden ? "-translate-y-full" : "translate-y-0",
+      )}
+    >
+      <div className="flex items-center gap-6">
+        <SidebarToggle />
+        <HeaderGreeting />
       </div>
 
-      <div className="flex items-center gap-4">
-        <ThemeToggle />
+      <div className="flex flex-1 items-center justify-center px-4">
+        <HeaderSearch />
+      </div>
+
+      <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
+          <LanguageSelector />
+          <ActivityViewer />
+          <NotificationsDropdown />
+          <ThemeToggle />
+          <UserNav
+            user={{
+              email: "john.doe@example.com",
+              name: "John Doe",
+            }}
+          />
+        </div>
       </div>
     </header>
   );

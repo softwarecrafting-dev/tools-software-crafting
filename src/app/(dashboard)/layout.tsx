@@ -1,3 +1,4 @@
+import { SidebarProvider } from "@/components/providers/sidebar-provider";
 import { findUserById } from "@/lib/db/repositories/user.repo";
 import { requireAuth } from "@/lib/middleware/auth";
 import { redirect } from "next/navigation";
@@ -21,23 +22,27 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar
-        user={{
-          name: user.name,
-          email: user.email,
-          avatarUrl: user.avatarUrl,
-        }}
-        className="hidden md:flex"
-      />
+    <SidebarProvider>
+      <div className="flex h-screen overflow-hidden ">
+        <Sidebar
+          user={{
+            name: user.name,
+            email: user.email,
+            avatarUrl: user.avatarUrl,
+          }}
+          className="hidden md:flex"
+        />
 
-      <div className="flex flex0 flex-col overflow-hidden">
-        <Header />
+        <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden scrollbar-none">
+          <div className="absolute inset-0 -z-10 h-[45%] w-full bg-primary" />
 
-        <main className="flex0 overflow-y-auto p-6 md:p-8 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
-          <div className="mx-auto max-w-6xl space-y-8">{children}</div>
-        </main>
+          <Header />
+
+          <main className="flex-1 p-6 md:p-8 ">
+            <div className="mx-auto max-w-7xl">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
