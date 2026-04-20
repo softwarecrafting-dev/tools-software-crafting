@@ -35,18 +35,25 @@ export function DashboardHeader() {
     <header className="w-full ">
       <div className="flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button
-            variant="default"
-            size="icon"
-            className="bg-accent text-foreground"
-            onClick={toggleSidebar}
-          >
-            {isCollapsed ? (
-              <PanelRightClose className="h-5 w-5" />
-            ) : (
-              <PanelLeftClose className="h-5 w-5" />
-            )}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="default"
+                size="icon"
+                className="bg-accent text-foreground"
+                onClick={toggleSidebar}
+              >
+                {isCollapsed ? (
+                  <PanelRightClose className="h-5 w-5" />
+                ) : (
+                  <PanelLeftClose className="h-5 w-5" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </TooltipContent>
+          </Tooltip>
 
           <div className="flex flex-col gap-1">
             <h1 className="font-semibold leading-none">

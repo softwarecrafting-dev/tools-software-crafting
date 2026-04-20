@@ -11,6 +11,11 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   AlertCircle,
@@ -347,25 +352,28 @@ export function NotificationsPopover() {
   }, [activeTab]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 text-muted-foreground hover:text-foreground relative group"
-          >
-            <Bell className="h-5 w-5 transition-transform group-hover:rotate-12" />
-            <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-destructive border-2 border-background" />
-          </Button>
-        </div>
-      </PopoverTrigger>
+    <Tooltip>
+      <Popover open={open} onOpenChange={setOpen}>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-muted-foreground hover:text-foreground relative group"
+              >
+                <Bell className="h-5 w-5 transition-transform group-hover:rotate-12" />
+                <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-destructive border-2 border-background" />
+              </Button>
+            </div>
+          </PopoverTrigger>
+        </TooltipTrigger>
 
-      <PopoverContent
-        align="end"
-        sideOffset={8}
-        className="w-[380px] p-0 overflow-hidden bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl"
-      >
+        <PopoverContent
+          align="end"
+          sideOffset={8}
+          className="w-[380px] p-0 overflow-hidden bg-background/95 backdrop-blur-xl border border-border shadow-2xl rounded-2xl"
+        >
         <div className="flex items-center justify-between px-4 pt-4 pb-1">
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-bold tracking-[0.15em] text-muted-foreground uppercase opacity-80">
@@ -450,5 +458,7 @@ export function NotificationsPopover() {
         </Tabs>
       </PopoverContent>
     </Popover>
+    <TooltipContent>Notifications</TooltipContent>
+  </Tooltip>
   );
 }

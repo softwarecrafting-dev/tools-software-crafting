@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { AlertCircle, RotateCcw } from "lucide-react";
-import { useEffect } from "react";
+import { AlertCircle, Loader2, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function InvoicesError({
   error,
@@ -11,23 +11,45 @@ export default function InvoicesError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const [isResetting, setIsResetting] = useState(false);
+
   useEffect(() => {
     console.error(error);
   }, [error]);
 
+  const handleReset = () => {
+    setIsResetting(true);
+    setTimeout(() => {
+      reset();
+      setIsResetting(false);
+    }, 600);
+  };
+
   return (
-    <div className="flex h-[450px] shrink-0 items-center justify-center rounded-md border border-dashed">
-      <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-          <AlertCircle className="h-10 w-10 text-destructive" />
+    <div className="flex h-[450px] shrink-0 items-center justify-center rounded-xl border border-dashed bg-card/30 backdrop-blur-[2px]">
+      <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center p-6">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 ring-1 ring-destructive/20 ring-inset">
+          <AlertCircle className="h-8 w-8 text-destructive" />
         </div>
-        <h3 className="mt-4 text-lg font-semibold">Something went wrong!</h3>
-        <p className="mb-4 mt-2 text-sm text-muted-foreground">
-          {error.message || "Failed to load invoices. Please try again."}
+        <h3 className="mt-6 text-xl font-semibold tracking-tight">
+          Unable to load invoices
+        </h3>
+        <p className="mb-8 mt-2 text-sm text-muted-foreground leading-relaxed">
+          {error.message ||
+            "We encountered an unexpected issue while retrieving your data. This might be a temporary connection problem."}
         </p>
-        <Button onClick={() => reset()} variant="outline">
-          <RotateCcw className=" h-4 w-4" />
-          Try again
+        <Button
+          onClick={handleReset}
+          variant="outline"
+          disabled={isResetting}
+          className=" shadow-sm hover:shadow-md transition-all active:scale-95"
+        >
+          {isResetting ? (
+            <Loader2 className="h-4 w-4  animate-spin" />
+          ) : (
+            <RotateCcw className="h-4 w-4 " />
+          )}
+          {isResetting ? "Retrying..." : "Try again"}
         </Button>
       </div>
     </div>

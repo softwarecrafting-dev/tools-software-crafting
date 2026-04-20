@@ -2,6 +2,7 @@ import * as z from "zod";
 
 export const InvoiceStatusEnum = z.enum([
   "draft",
+  "pending",
   "sent",
   "viewed",
   "paid",
@@ -63,8 +64,17 @@ export const InvoiceFiltersSchema = z.object({
   status: InvoiceStatusEnum.optional(),
   search: z.string().max(100).optional(),
   sortBy: z
-    .enum(["created_at", "updated_at", "total", "status", "due_date"])
-    .default("created_at"),
+    .enum([
+      "invoiceNumber",
+      "clientName",
+      "status",
+      "issueDate",
+      "dueDate",
+      "total",
+      "createdAt",
+      "updatedAt",
+    ])
+    .default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
   fromDate: z.iso.datetime().optional(),
   toDate: z.iso.datetime().optional(),

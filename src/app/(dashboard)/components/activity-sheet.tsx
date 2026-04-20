@@ -263,7 +263,7 @@ function ActivityList() {
         subtitle="mentioned you in last trends topic"
         timestamp="18 mins ago"
       >
-        <MentionBox content="@ShadcnStudio For an expert opinion, check out what Mike has to say on this topic!" />
+        <MentionBox content="@SoftwareCrafting For an expert opinion, check out what Mike has to say on this topic!" />
       </ActivityItemWrapper>
 
       <ActivityItemWrapper

@@ -53,7 +53,7 @@ export async function findAllInvoices(
     limit = DEFAULT_LIMIT,
     status,
     search,
-    sortBy = "created_at",
+    sortBy = "createdAt",
     sortOrder = "desc",
     fromDate,
     toDate,
@@ -70,21 +70,49 @@ export async function findAllInvoices(
   }
 
   if (search) {
+    const cleanSearch = search.trim();
+
     whereConditions.push(
       or(
-        ilike(invoices.clientName, `%${search}%`),
-        ilike(invoices.invoiceNumber, `%${search}%`),
+        ilike(invoices.clientName, `%${cleanSearch}%`),
+        ilike(invoices.invoiceNumber, `%${cleanSearch}%`),
       ),
     );
   }
 
+  const now = new Date();
+  const twoYearsAgo = new Date(
+    now.getFullYear() - 2,
+    now.getMonth(),
+    now.getDate(),
+  );
+
   if (fromDate) {
-    whereConditions.push(gte(invoices.issueDate, new Date(fromDate)));
+    const start = new Date(fromDate);
+    const effectiveStart = start < twoYearsAgo ? twoYearsAgo : start;
+
+    whereConditions.push(gte(invoices.issueDate, effectiveStart));
+  } else {
+    whereConditions.push(gte(invoices.issueDate, twoYearsAgo));
   }
 
   if (toDate) {
-    whereConditions.push(lte(invoices.issueDate, new Date(toDate)));
+    const end = new Date(toDate);
+    end.setHours(23, 59, 59, 999);
+
+    whereConditions.push(lte(invoices.issueDate, end));
   }
+
+  const sortColumnMapping: Record<string, PgColumn> = {
+    invoiceNumber: invoices.invoiceNumber,
+    clientName: invoices.clientName,
+    status: invoices.status,
+    issueDate: invoices.issueDate,
+    dueDate: invoices.dueDate,
+    total: invoices.total,
+    createdAt: invoices.createdAt,
+    updatedAt: invoices.updatedAt,
+  };
 
   if (cursor) {
     const cursorInvoice = await db
@@ -95,41 +123,23 @@ export async function findAllInvoices(
       .then((res) => res[0]);
 
     if (cursorInvoice) {
-      const sortColumnMapping: Record<string, PgColumn> = {
-        created_at: invoices.createdAt,
-        updated_at: invoices.updatedAt,
-        total: invoices.total,
-        status: invoices.status,
-        due_date: invoices.dueDate,
-      };
-
       const sortColumn = sortColumnMapping[sortBy] || invoices.createdAt;
+      const cursorVal = cursorInvoice[sortBy as keyof typeof cursorInvoice];
 
-      const cursorVal =
-        sortBy === "created_at"
-          ? cursorInvoice.createdAt
-          : sortBy === "updated_at"
-            ? cursorInvoice.updatedAt
-            : sortBy === "total"
-              ? cursorInvoice.total
-              : sortBy === "status"
-                ? cursorInvoice.status
-                : sortBy === "due_date"
-                  ? cursorInvoice.dueDate
-                  : cursorInvoice.createdAt;
+      const val = cursorVal as string | number | Date;
 
       if (sortOrder === "desc") {
         whereConditions.push(
           or(
-            lt(sortColumn, cursorVal),
-            and(eq(sortColumn, cursorVal), lt(invoices.id, cursor)),
+            lt(sortColumn, val),
+            and(eq(sortColumn, val), lt(invoices.id, cursor)),
           ),
         );
       } else {
         whereConditions.push(
           or(
-            gt(sortColumn, cursorVal),
-            and(eq(sortColumn, cursorVal), gt(invoices.id, cursor)),
+            gt(sortColumn, val),
+            and(eq(sortColumn, val), gt(invoices.id, cursor)),
           ),
         );
       }
@@ -137,14 +147,6 @@ export async function findAllInvoices(
   }
 
   const sortOrderFn = sortOrder === "desc" ? desc : asc;
-  const sortColumnMapping: Record<string, PgColumn> = {
-    created_at: invoices.createdAt,
-    updated_at: invoices.updatedAt,
-    total: invoices.total,
-    status: invoices.status,
-    due_date: invoices.dueDate,
-  };
-
   const primarySort = sortColumnMapping[sortBy] || invoices.createdAt;
 
   const filteredConditions = whereConditions.filter(
@@ -161,6 +163,7 @@ export async function findAllInvoices(
   let nextCursor: string | null = null;
   if (items.length > limit) {
     const nextItem = items.pop();
+
     nextCursor = nextItem?.id || null;
   }
 

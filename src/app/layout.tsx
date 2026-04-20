@@ -19,6 +19,19 @@ export const metadata: Metadata = {
   },
   description:
     "Invoice Generator and productivity tools for freelancers and agencies.",
+  icons: [
+    {
+      rel: "icon",
+      url: "/icon.svg",
+      media: "(prefers-color-scheme: light)",
+    },
+    {
+      rel: "icon",
+      url: "/icon-dark.svg",
+      media: "(prefers-color-scheme: dark)",
+    },
+  ],
+
 };
 
 export default function RootLayout({

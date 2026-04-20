@@ -19,6 +19,8 @@ import {
   Timer,
   Users,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -65,7 +67,6 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: Home,
-      isActive: true,
     },
     {
       title: "Invoices",
@@ -199,24 +200,28 @@ const data = {
 };
 
 function NavMain({ items }: { items: typeof data.navMain }) {
+  const pathname = usePathname();
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Pages</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) =>
-          item.items ? (
+        {items.map((item) => {
+          const isParentActive = item.items?.some(
+            (subItem) => subItem.url === pathname,
+          );
+          const isActive = item.url === pathname || isParentActive;
+
+          return item.items ? (
             <Collapsible
               key={item.title}
               asChild
-              defaultOpen={item.isActive}
+              defaultOpen={isActive}
               className="group/collapsible"
             >
               <SidebarMenuItem>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton
-                    tooltip={item.title}
-                    isActive={item.isActive}
-                  >
+                  <SidebarMenuButton tooltip={item.title} isActive={isActive}>
                     <item.icon />
                     <span>{item.title}</span>
                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -226,10 +231,13 @@ function NavMain({ items }: { items: typeof data.navMain }) {
                   <SidebarMenuSub>
                     {item.items.map((subItem) => (
                       <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
-                          <a href={subItem.url}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={pathname === subItem.url}
+                        >
+                          <Link href={subItem.url}>
                             <span>{subItem.title}</span>
-                          </a>
+                          </Link>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
                     ))}
@@ -239,19 +247,15 @@ function NavMain({ items }: { items: typeof data.navMain }) {
             </Collapsible>
           ) : (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                tooltip={item.title}
-                isActive={item.isActive}
-                asChild
-              >
-                <a href={item.url}>
+              <SidebarMenuButton tooltip={item.title} isActive={isActive} asChild>
+                <Link href={item.url}>
                   <item.icon />
                   <span>{item.title}</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
-          ),
-        )}
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );
@@ -358,8 +362,6 @@ function NavUser({ user }: { user: typeof data.user }) {
 }
 
 export function DashboardSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  const { state } = useSidebar();
-  const isCollapsed = state === "collapsed";
 
   return (
     <Sidebar variant="floating" collapsible="icon" {...props}>
@@ -367,7 +369,7 @@ export function DashboardSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
+              <Link href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-foreground text-sidebar">
                   <svg
                     viewBox="0 0 24 24"
@@ -387,7 +389,7 @@ export function DashboardSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <span className="truncate font-semibold">Tools</span>
                   <span className="truncate text-xs">softwarecrafting.in</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
