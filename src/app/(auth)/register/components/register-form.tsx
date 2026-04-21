@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { apiClient, ApiError } from "@/lib/api-client";
 import { RegisterSchema, type RegisterInput } from "@/lib/validators/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -120,6 +121,26 @@ export function PasswordInput({
 
 export type BannerVariant = "error" | "warning";
 
+export function getAuthError(error: unknown): string {
+  if (!(error instanceof ApiError)) {
+    return "Something went wrong. Please try again.";
+  }
+
+  if (error.status === 0) {
+    return "No internet connection. Please check your connection and try again.";
+  }
+
+  if (error.status === 429) {
+    return "Too many attempts. Please wait a moment before trying again.";
+  }
+
+  if (error.status >= 500) {
+    return "Something went wrong on our end. Please try again later.";
+  }
+
+  return error.message || "Something went wrong. Please try again.";
+}
+
 export function AlertBanner({
   variant,
   children,
@@ -169,44 +190,25 @@ export function RegisterForm() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: RegisterInput) => {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      await apiClient.post("/auth/register", data);
 
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(JSON.stringify(json));
-      }
-
-      return { data, json };
+      return data;
     },
 
-    onSuccess: ({ data }) => {
+    retry: false,
+
+    onSuccess: (data) => {
       router.push(
         `/register/verify-prompt?email=${encodeURIComponent(data.email)}`,
       );
     },
 
     onError: (error) => {
-      try {
-        const json = JSON.parse(error.message);
+      if (error instanceof ApiError && error.code === "EMAIL_ALREADY_EXISTS") {
+        setBanner({ type: "warning", message: error.message });
+      } else {
+        setBanner({ type: "error", message: getAuthError(error) });
 
-        if (json.code === "EMAIL_ALREADY_EXISTS") {
-          setBanner({ type: "warning", message: json.error });
-        } else {
-          setBanner({
-            type: "error",
-            message: json.error ?? "Something went wrong. Please try again.",
-          });
-          triggerShake();
-        }
-      } catch {
-        setBanner({
-          type: "error",
-          message: "Something went wrong. Please try again.",
-        });
         triggerShake();
       }
     },

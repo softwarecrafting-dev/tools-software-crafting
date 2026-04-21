@@ -17,23 +17,32 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useInvoices } from "@/hooks/use-invoices";
+import { ApiError } from "@/lib/api-client";
 import {
   type InvoiceFiltersInput,
   type InvoiceStatus,
 } from "@/lib/validators/invoice";
 import {
+  AlertCircle,
   Check,
   ChevronsUpDown,
+  Clock,
   FileDown,
   FileJson,
   FileSpreadsheet,
   FileText,
   FilterX,
+  Lock,
   Plus,
+  RefreshCw,
+  RotateCw,
   Search,
+  ServerCrash,
+  WifiOff,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import type { ReactNode } from "react";
+import { memo, useCallback, useDeferredValue, useMemo, useState } from "react";
 import { type DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "./date-picker-with-range";
 import { InfiniteScrollTrigger } from "./infinite-scroll-trigger";
@@ -41,7 +50,7 @@ import { InvoicesTable } from "./invoices-table";
 
 export function InvoicesClient() {
   const [search, setSearch] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const deferredSearch = useDeferredValue(search);
   const [status, setStatus] = useState<InvoiceStatus | "all">("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] =
@@ -58,7 +67,7 @@ export function InvoicesClient() {
     { label: "Cancelled", value: "cancelled" },
   ];
 
-  const debouncedSearch = useDebounce(search, 500);
+  const debouncedSearch = useDebounce(deferredSearch, 400);
 
   const handleSortChange = useCallback(
     (field: string, order: "asc" | "desc") => {
@@ -72,11 +81,13 @@ export function InvoicesClient() {
     data,
     isLoading,
     isError,
+    error,
     isPlaceholderData,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isFetching,
+    refetch,
   } = useInvoices({
     search: debouncedSearch || undefined,
     status: status === "all" ? undefined : status,
@@ -92,37 +103,30 @@ export function InvoicesClient() {
     [data],
   );
 
-  const clearFilters = () => {
+  const handleSearchChange = useCallback(
+    (value: string) => setSearch(value),
+    [],
+  );
+
+  const clearFilters = useCallback(() => {
     setSearch("");
     setStatus("all");
     setDateRange(undefined);
-  };
-
-  if (isError) {
-    throw new Error("Failed to load invoices");
-  }
+  }, []);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 items-center gap-2 max-w-2xl">
           <div className="flex-1 max-w-sm">
-            <EnhancedInput
-              placeholder="Search by client or invoice #..."
+            <SearchInput
               value={search}
-              onChange={(e) => {
-                const value = e.target.value;
-                startTransition(() => {
-                  setSearch(value);
-                });
-              }}
-              onClear={() => {
-                startTransition(() => {
-                  setSearch("");
-                });
-              }}
-              isLoading={isFetching || debouncedSearch !== search || isPending}
-              kbd="⌘f"
+              onChange={handleSearchChange}
+              isLoading={
+                isFetching ||
+                debouncedSearch !== deferredSearch ||
+                deferredSearch !== search
+              }
             />
           </div>
           <DatePickerWithRange
@@ -229,6 +233,20 @@ export function InvoicesClient() {
               <Skeleton className="h-[300px] w-full" />
             </div>
           </motion.div>
+        ) : isError ? (
+          <motion.div
+            key="error"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <InlineError
+              error={error}
+              onRetry={() => void refetch()}
+              isRetrying={isFetching}
+            />
+          </motion.div>
         ) : allInvoices.length > 0 ? (
           <motion.div
             key="content"
@@ -283,6 +301,126 @@ export function InvoicesClient() {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+const SearchInput = memo(function SearchInput({
+  value,
+  onChange,
+  isLoading,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  isLoading: boolean;
+}) {
+  return (
+    <EnhancedInput
+      placeholder="Search by client or invoice #..."
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onClear={() => onChange("")}
+      isLoading={isLoading}
+      kbd="⌘f"
+    />
+  );
+});
+
+function InlineError({
+  error,
+  onRetry,
+  isRetrying,
+}: {
+  error: unknown;
+  onRetry: () => void;
+  isRetrying?: boolean;
+}) {
+  const apiError = error instanceof ApiError ? error : null;
+  const status = apiError?.status ?? 0;
+  const code = apiError?.code ?? "UNKNOWN_ERROR";
+  const serverMessage = apiError?.message;
+
+  const config: Record<
+    string,
+    { icon: ReactNode; title: string; hint: string }
+  > = {
+    RATE_LIMITED: {
+      icon: <Clock className="h-8 w-8 text-amber-500" />,
+      title: "Slow down a little",
+      hint: "You've made too many requests in a short time. Wait a moment and try again.",
+    },
+    UNAUTHORIZED: {
+      icon: <Lock className="h-8 w-8 text-destructive" />,
+      title: "Session expired",
+      hint: "Your session may have expired. Please refresh the page or sign in again.",
+    },
+    FORBIDDEN: {
+      icon: <Lock className="h-8 w-8 text-destructive" />,
+      title: "Access denied",
+      hint: "You don't have permission to view these invoices.",
+    },
+    NETWORK_ERROR: {
+      icon: <WifiOff className="h-8 w-8 text-muted-foreground" />,
+      title: "No connection",
+      hint: "Check your internet connection and try again.",
+    },
+    INTERNAL_ERROR: {
+      icon: <ServerCrash className="h-8 w-8 text-destructive" />,
+      title: "Server error",
+      hint: "Something went wrong on our end. We're on it — try again in a moment.",
+    },
+  };
+
+  const resolvedCode =
+    status === 429
+      ? "RATE_LIMITED"
+      : status === 401
+        ? "UNAUTHORIZED"
+        : status === 403
+          ? "FORBIDDEN"
+          : status === 0
+            ? "NETWORK_ERROR"
+            : status >= 500
+              ? "INTERNAL_ERROR"
+              : code;
+
+  const { icon, title, hint } = config[resolvedCode] ?? {
+    icon: <AlertCircle className="h-8 w-8 text-destructive" />,
+    title: "Failed to load invoices",
+    hint: "An unexpected error occurred. Please try again.",
+  };
+
+  return (
+    <div className="flex h-[350px] flex-col items-center justify-center rounded-lg border border-dashed bg-card/30">
+      <div className="mx-auto flex max-w-sm flex-col items-center text-center gap-3 p-6">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50 ring-1 ring-border">
+          {icon}
+        </div>
+
+        <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
+
+        {serverMessage && serverMessage !== hint && (
+          <p className="text-xs font-mono text-muted-foreground bg-muted px-3 py-1.5 rounded-md border">
+            {serverMessage}
+          </p>
+        )}
+
+        <p className="text-sm text-muted-foreground leading-relaxed">{hint}</p>
+
+        <Button
+          variant="outline"
+          onClick={onRetry}
+          disabled={isRetrying}
+          className="mt-2 gap-2 shadow-sm hover:shadow-md transition-all active:scale-95"
+        >
+          {isRetrying ? (
+            <RefreshCw className="h-4 w-4 animate-spin" />
+          ) : (
+            <RotateCw className="h-4 w-4" />
+          )}
+          {isRetrying ? "Retrying..." : "Try again"}
+        </Button>
+      </div>
     </div>
   );
 }

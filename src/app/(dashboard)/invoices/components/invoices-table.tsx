@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 import { memo, useState } from "react";
 import { InvoiceStatusBadge } from "./invoice-status-badge";
@@ -54,6 +55,7 @@ export const InvoicesTable = memo(function InvoicesTable({
   sortOrder,
   onSortChange,
 }: InvoicesTableProps) {
+  const router = useRouter();
   const [rowSelection, setRowSelection] = useState({});
 
   const columns = React.useMemo<ColumnDef<InvoiceRecord>[]>(
@@ -287,20 +289,18 @@ export const InvoicesTable = memo(function InvoicesTable({
               {table.getRowModel().rows.map((row, index) => (
                 <motion.tr
                   key={row.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
+                  exit={{ opacity: 0 }}
                   transition={{
-                    duration: 0.2,
-                    delay: Math.min(index * 0.03, 0.3),
+                    duration: 0.15,
+                    delay: Math.min(index * 0.02, 0.2),
                     ease: "easeOut",
                   }}
                   className="group border-b transition-colors hover:bg-muted/40 data-[state=selected]:bg-primary/5 cursor-pointer"
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => {
-                    // TODO
-                    window.location.href = `/invoices/${row.original.id}`;
+                    router.push(`/invoices/${row.original.id}`);
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (

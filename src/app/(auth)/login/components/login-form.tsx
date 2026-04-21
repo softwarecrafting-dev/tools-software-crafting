@@ -16,6 +16,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { apiClient } from "@/lib/api-client";
 import { LoginSchema, type LoginInput } from "@/lib/validators/user";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -28,6 +29,7 @@ import { Controller, useForm } from "react-hook-form";
 import {
   AlertBanner,
   BannerVariant,
+  getAuthError,
 } from "../../register/components/register-form";
 
 function PasswordInput({
@@ -83,20 +85,10 @@ export function LoginForm() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: LoginInput) => {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const json = await res.json();
-
-      if (!res.ok) {
-        throw new Error(JSON.stringify(json));
-      }
-
-      return json;
+      await apiClient.post("/auth/login", data);
     },
+
+    retry: false,
 
     onSuccess: () => {
       router.push("/dashboard");
@@ -104,23 +96,9 @@ export function LoginForm() {
     },
 
     onError: (error) => {
-      try {
-        const json = JSON.parse(error.message);
+      setBanner({ type: "error", message: getAuthError(error) });
 
-        setBanner({
-          type: "error",
-          message: json.error ?? "Invalid email or password.",
-        });
-
-        triggerShake();
-      } catch {
-        setBanner({
-          type: "error",
-          message: "Something went wrong. Please try again.",
-        });
-
-        triggerShake();
-      }
+      triggerShake();
     },
   });
 

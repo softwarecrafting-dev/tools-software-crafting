@@ -20,6 +20,7 @@ import {
   ForgotPasswordSchema,
   type ForgotPasswordInput,
 } from "@/lib/validators/user";
+import { apiClient } from "@/lib/api-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
@@ -30,6 +31,7 @@ import { Controller, useForm } from "react-hook-form";
 import {
   AlertBanner,
   BannerVariant,
+  getAuthError,
 } from "../../register/components/register-form";
 
 export function ForgotPasswordForm() {
@@ -47,39 +49,18 @@ export function ForgotPasswordForm() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: ForgotPasswordInput) => {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(JSON.stringify(json));
-      }
-
-      return json;
+      await apiClient.post("/auth/forgot-password", data);
     },
+
+    retry: false,
 
     onSuccess: () => {
       setSuccess(true);
     },
 
     onError: (error) => {
-      try {
-        const json = JSON.parse(error.message);
-        setBanner({
-          type: "error",
-          message: json.error ?? "Something went wrong. Please try again.",
-        });
-        triggerShake();
-      } catch {
-        setBanner({
-          type: "error",
-          message: "Something went wrong. Please try again.",
-        });
-        triggerShake();
-      }
+      setBanner({ type: "error", message: getAuthError(error) });
+      triggerShake();
     },
   });
 

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
     await applyRateLimit(`invoices:list:${userId}`, {
       name: "invoices_list",
-      points: 20,
+      points: 10,
       duration: 60,
     });
 

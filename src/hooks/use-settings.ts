@@ -1,19 +1,22 @@
+import { apiClient } from "@/lib/api-client";
 import type { UserSettingsRecord } from "@/lib/db/repositories/types";
 import type { SettingsInput } from "@/lib/validators/settings";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 
 export function useSettings() {
   return useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
-      const { data } = await axios.get<{
-        success: boolean;
-        data: UserSettingsRecord | null;
-      }>("/api/settings");
+      const res = await apiClient.get<
+        unknown,
+        { data: UserSettingsRecord | null }
+      >("/settings");
 
-      return data.data;
+      return res.data;
     },
+
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
   });
 }
 
@@ -22,12 +25,11 @@ export function useUpdateSettings() {
 
   return useMutation({
     mutationFn: async (payload: Partial<SettingsInput>) => {
-      const { data } = await axios.patch<{
-        success: boolean;
-        data: UserSettingsRecord;
-      }>("/api/settings", payload);
-
-      return data.data;
+      const res = await apiClient.patch<unknown, { data: UserSettingsRecord }>(
+        "/settings",
+        payload,
+      );
+      return res.data;
     },
 
     onSuccess: () => {
@@ -41,10 +43,7 @@ export function useCompleteOnboarding() {
 
   return useMutation({
     mutationFn: async () => {
-      const { data } = await axios.patch<{ success: boolean; message: string }>(
-        "/api/user/onboarding",
-      );
-      return data;
+      await apiClient.patch("/user/onboarding");
     },
 
     onSuccess: () => {
