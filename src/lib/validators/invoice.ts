@@ -25,22 +25,33 @@ export const InvoiceLineItemSchema = z.object({
 export type InvoiceLineItemInput = z.infer<typeof InvoiceLineItemSchema>;
 
 export const InvoiceBaseSchema = z.object({
-  clientName: z.string().min(1, "Client name is required").max(255),
-  clientEmail: z.email("Invalid client email").max(255),
+  clientName: z.string().trim().min(1, "Client name is required").max(255),
+  clientEmail: z.email("Invalid client email").max(255).trim(),
   clientCompany: z.string().max(255).optional().nullable(),
   clientAddress: z.string().max(1000).optional().nullable(),
   clientGstin: z.string().max(20).optional().nullable(),
   poNumber: z.string().max(100).optional().nullable(),
-  invoiceNumber: z.string().min(1, "Invoice number is required").max(50),
+  invoiceNumber: z.string().trim().min(1, "Invoice number is required").max(50),
   currency: z.enum(["INR", "USD", "GBP", "EUR", "AED"]).default("INR"),
   issueDate: z.iso.datetime(),
   dueDate: z.iso.datetime(),
   lineItems: z
     .array(InvoiceLineItemSchema)
     .min(1, "At least one line item is required"),
-  taxRate: z.number().min(0).max(100),
+  taxRate: z.number().min(0).max(100).default(0),
+  taxAmount: z.number().nonnegative().default(0),
   discountType: z.enum(["percentage", "fixed"]).nullable().optional(),
   discountValue: z.number().nonnegative().default(0),
+  discountAmount: z.number().nonnegative().default(0),
+  subtotal: z.number().nonnegative().default(0),
+  total: z.number().nonnegative().default(0),
+  template: z.enum(["minimal", "classic", "modern"]).default("minimal"),
+  paymentTermsDays: z.number().int().nonnegative().optional().nullable(),
+  taxLabel: z.string().max(50).default("Tax"),
+  attachments: z.array(z.url()).default([]),
+  sendToEmail: z.email().optional().nullable(),
+  sendCcEmails: z.array(z.email()).default([]),
+  publicToken: z.string().optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
   terms: z.string().max(2000).optional().nullable(),
 });

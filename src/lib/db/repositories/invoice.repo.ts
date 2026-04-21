@@ -1,5 +1,5 @@
 import { db } from "@/lib/db/client";
-import { invoices } from "@/lib/db/schema";
+import { invoices, userSettings } from "@/lib/db/schema";
 import type { InvoiceFiltersInput } from "@/lib/validators/invoice";
 import type { SQL } from "drizzle-orm";
 import {
@@ -20,10 +20,64 @@ import type { InvoiceRecord, NewInvoice } from "./types";
 
 export const DEFAULT_LIMIT = 25;
 
-export async function createInvoice(data: NewInvoice): Promise<InvoiceRecord> {
+export async function create(data: NewInvoice): Promise<InvoiceRecord> {
   const [invoice] = await db.insert(invoices).values(data).returning();
 
   return invoice;
+}
+
+export async function checkNumberExists(
+  userId: string,
+  invoiceNumber: string,
+): Promise<boolean> {
+  const [existing] = await db
+    .select({ id: invoices.id })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.userId, userId),
+        eq(invoices.invoiceNumber, invoiceNumber),
+      ),
+    )
+    .limit(1);
+
+  return !!existing;
+}
+
+export async function getNextNumber(userId: string): Promise<string> {
+  const [settings] = await db
+    .select({ invoicePrefix: userSettings.invoicePrefix })
+    .from(userSettings)
+    .where(eq(userSettings.userId, userId))
+    .limit(1);
+
+  const prefix = settings?.invoicePrefix ?? "INV";
+
+  const [lastInvoice] = await db
+    .select({ invoiceNumber: invoices.invoiceNumber })
+    .from(invoices)
+    .where(eq(invoices.userId, userId))
+    .orderBy(desc(invoices.createdAt))
+    .limit(1);
+
+  if (!lastInvoice) {
+    return `${prefix}-0001`;
+  }
+
+  const match = lastInvoice.invoiceNumber.match(/\d+$/);
+  if (!match) {
+    return `${prefix}-0001`;
+  }
+
+  const lastNumber = parseInt(match[0], 10);
+  const nextNumber = (lastNumber + 1).toString().padStart(match[0].length, "0");
+
+  const prefixPart = lastInvoice.invoiceNumber.substring(
+    0,
+    lastInvoice.invoiceNumber.length - match[0].length,
+  );
+
+  return `${prefixPart}${nextNumber}`;
 }
 
 export async function findInvoiceById(

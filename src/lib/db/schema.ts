@@ -193,8 +193,8 @@ export const userSettings = pgTable(
     bankAccountNumber: text("bank_account_number"),
     bankIfsc: text("bank_ifsc"),
     bankUpiId: text("bank_upi_id"),
-    logoUrl: text("logo_url"), // Cloudflare R2 URL
-    signatureUrl: text("signature_url"), // R2 URL for saved signature image
+    logoUrl: text("logo_url"),
+    signatureUrl: text("signature_url"),
     defaultCurrency: text("default_currency").notNull().default("INR"),
     defaultTaxRate: numeric("default_tax_rate", {
       precision: 5,
@@ -205,6 +205,7 @@ export const userSettings = pgTable(
     invoicePrefix: text("invoice_prefix").notNull().default("INV"),
     defaultPaymentTerms: text("default_payment_terms"),
     defaultNotes: text("default_notes"),
+    swiftBic: text("swift_bic"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -257,6 +258,17 @@ export const invoices = pgTable(
       .default("0.00"),
     status: text("status").notNull().default("draft"), // 'draft' | 'sent' | 'viewed' | 'paid' | 'overdue' | 'cancelled'
     pdfUrl: text("pdf_url"),
+    template: text("template").default("minimal"),
+    paymentTermsDays: integer("payment_terms_days"),
+    taxLabel: text("tax_label").default("Tax"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    viewedAt: timestamp("viewed_at", { withTimezone: true }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+    attachments: jsonb("attachments").default([]),
+    sendToEmail: text("send_to_email"),
+    sendCcEmails: jsonb("send_cc_emails").default([]),
+    publicToken: text("public_token").unique(),
     notes: text("notes"),
     terms: text("terms"),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -273,6 +285,7 @@ export const invoices = pgTable(
     index("idx_invoices_invoice_number").on(table.invoiceNumber),
     index("idx_invoices_created_at").on(table.createdAt),
     index("idx_invoices_deleted_at").on(table.deletedAt),
+    index("idx_invoices_public_token").on(table.publicToken),
   ],
 );
 

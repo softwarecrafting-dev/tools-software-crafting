@@ -25,3 +25,10 @@ export class InvalidTokenError extends Error {
     this.name = "InvalidTokenError";
   }
 }
+
+export class InvoiceNumberTakenError extends Error {
+  constructor() {
+    super("Invoice number already taken");
+    this.name = "InvoiceNumberTakenError";
+  }
+}

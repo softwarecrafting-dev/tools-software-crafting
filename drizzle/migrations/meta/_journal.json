@@ -57,6 +57,13 @@
       "when": 1776689144011,
       "tag": "0007_mixed_talos",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776749808799,
+      "tag": "0008_slim_korath",
+      "breakpoints": true
     }
   ]
 }

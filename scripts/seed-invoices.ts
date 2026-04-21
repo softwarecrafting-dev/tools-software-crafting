@@ -1,84 +1,138 @@
+import { faker } from "@faker-js/faker";
 import { eq } from "drizzle-orm";
 import { db } from "../src/lib/db/client";
-import type { NewInvoice } from "../src/lib/db/repositories/types";
-import { invoices, users } from "../src/lib/db/schema";
+import { create, getNextNumber } from "../src/lib/db/repositories/invoice.repo";
+import { users, userSettings } from "../src/lib/db/schema";
 
 async function seed() {
   console.log("Seeding invoices...");
 
-  const email = "badal@softwarecrafting.in";
-  const user = await db.query.users.findFirst({
-    where: eq(users.email, email),
-  });
-
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, "badal@softwarecrafting.in"))
+    .limit(1);
   if (!user) {
-    console.error("No user found. Please register a user first.");
+    console.error("User badal@softwarecrafting.in not found.");
+
     process.exit(1);
   }
 
   console.log(`Seeding for user: ${user.email} (${user.id})`);
 
-  const statuses = [
-    "draft",
-    "pending",
-    "paid",
-    "overdue",
-    "cancelled",
-  ] as const;
-  const clients = [
-    { name: "Acme Corp", email: "billing@acme.com" },
-    { name: "Globex Corporation", email: "finance@globex.com" },
-    { name: "Soylent Corp", email: "accounts@soylent.com" },
-    { name: "Initech", email: "billing@initech.com" },
-    { name: "Wayne Enterprises", email: "finance@wayne.com" },
-  ];
+  let [settings] = await db
+    .select()
+    .from(userSettings)
+    .where(eq(userSettings.userId, user.id))
+    .limit(1);
 
-  const invoiceRecords: NewInvoice[] = [];
+  if (!settings) {
+    console.log("Creating default user settings...");
 
-  for (let i = 1; i <= 100; i++) {
-    const client = clients[Math.floor(Math.random() * clients.length)];
-    const status = statuses[Math.floor(Math.random() * statuses.length)] as any;
-    const total = parseFloat((Math.random() * 5000 + 100).toFixed(2));
+    [settings] = await db
+      .insert(userSettings)
+      .values({
+        userId: user.id,
+        businessName: faker.company.name(),
+        businessEmail: user.email,
+        businessAddress: faker.location.streetAddress({ useFullAddress: true }),
+        invoicePrefix: "INV",
+      })
+      .returning();
+  }
 
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 180));
-    const dueDate = new Date(date);
-    dueDate.setDate(dueDate.getDate() + 30);
+  const currency = settings?.defaultCurrency ?? "USD";
+  console.log(`Using currency: ${currency}`);
 
-    invoiceRecords.push({
+  const count = 100;
+  for (let i = 0; i < count; i++) {
+    const nextNum = await getNextNumber(user.id);
+    const lineItemCount = faker.number.int({ min: 1, max: 5 });
+    const lineItems = [];
+    let subtotalIdx = 0;
+
+    for (let j = 0; j < lineItemCount; j++) {
+      const qty = faker.number.int({ min: 1, max: 10 });
+      const rate = faker.number.int({ min: 100, max: 5000 });
+      const amount = qty * rate;
+      subtotalIdx += amount;
+
+      lineItems.push({
+        id: faker.string.uuid(),
+        name: faker.commerce.productName(),
+        description: faker.commerce.productDescription(),
+        quantity: qty,
+        unit: faker.helpers.arrayElement(["hrs", "days", "units"]),
+        rate: rate,
+        amount: amount,
+      });
+    }
+
+    const taxRate = faker.helpers.arrayElement([0, 5, 12, 18]);
+    const discountType = faker.helpers.arrayElement([
+      "percentage",
+      "fixed",
+      null,
+    ]);
+    let discountValue = 0;
+    let discountAmount = 0;
+
+    if (discountType === "percentage") {
+      discountValue = faker.number.int({ min: 5, max: 15 });
+      discountAmount = (subtotalIdx * discountValue) / 100;
+    } else if (discountType === "fixed") {
+      discountValue = faker.number.int({ min: 50, max: 500 });
+      discountAmount = discountValue;
+    }
+
+    const taxableAmount = subtotalIdx - discountAmount;
+    const taxAmount = (taxableAmount * taxRate) / 100;
+    const total = taxableAmount + taxAmount;
+
+    const issueDate = faker.date.past({ years: 1 });
+    const dueDate = new Date(issueDate);
+    dueDate.setDate(
+      dueDate.getDate() + faker.helpers.arrayElement([7, 14, 30]),
+    );
+
+    const status = faker.helpers.arrayElement([
+      "draft",
+      "sent",
+      "viewed",
+      "paid",
+      "overdue",
+    ]);
+
+    await create({
       userId: user.id,
-      invoiceNumber: `INV-2024-${String(i).padStart(4, "0")}`,
-      clientName: client.name,
-      clientEmail: client.email,
-      status: status,
-      currency: "USD",
-      total: total.toFixed(2),
-      subtotal: (total * 0.82).toFixed(2),
-      taxRate: "18.00",
-      taxAmount: (total * 0.18).toFixed(2),
-      issueDate: date,
+      invoiceNumber: nextNum,
+      clientName: faker.company.name(),
+      clientEmail: faker.internet.email(),
+      clientCompany: faker.company.name(),
+      clientAddress: faker.location.streetAddress({ useFullAddress: true }),
+      clientGstin: faker.helpers.replaceSymbols("29AAAAA0000A1Z5"),
+      currency: currency,
+      issueDate: issueDate,
       dueDate: dueDate,
-      lineItems: [
-        {
-          id: crypto.randomUUID(),
-          description: "Software Services",
-          quantity: 1,
-          unitPrice: (total * 0.82).toFixed(2),
-          total: (total * 0.82).toFixed(2),
-        },
-      ],
-      createdAt: date,
-      updatedAt: date,
+      lineItems: lineItems,
+      subtotal: subtotalIdx.toFixed(2),
+      taxRate: taxRate.toFixed(2),
+      taxAmount: taxAmount.toFixed(2),
+      discountType: discountType,
+      discountValue: discountValue.toFixed(2),
+      discountAmount: discountAmount.toFixed(2),
+      total: total.toFixed(2),
+      status: status,
+      notes: faker.lorem.sentence(),
+      terms: faker.lorem.paragraph(),
+      template: faker.helpers.arrayElement(["minimal", "classic", "modern"]),
+      taxLabel: "Tax",
     });
+
+    console.log(`Seeded invoice ${nextNum}`);
   }
 
-  for (let i = 0; i < invoiceRecords.length; i += 20) {
-    const batch = invoiceRecords.slice(i, i + 20);
-    await db.insert(invoices).values(batch);
-    console.log(`Inserted batch ${i / 20 + 1}`);
-  }
-
-  console.log("Seeding complete!");
+  console.log(`Successfully seeded ${count} invoices.`);
   process.exit(0);
 }
 
