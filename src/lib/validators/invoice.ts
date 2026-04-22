@@ -54,6 +54,12 @@ export const InvoiceBaseSchema = z.object({
   publicToken: z.string().optional().nullable(),
   notes: z.string().max(2000).optional().nullable(),
   terms: z.string().max(2000).optional().nullable(),
+  fromName: z.string().max(255).optional().nullable(),
+  fromEmail: z.string().max(255).optional().nullable(),
+  fromPhone: z.string().max(50).optional().nullable(),
+  fromAddress: z.string().max(1000).optional().nullable(),
+  fromGstin: z.string().max(20).optional().nullable(),
+  fromPan: z.string().max(20).optional().nullable(),
 });
 
 export const InvoiceCreateSchema = InvoiceBaseSchema.refine(

@@ -9,6 +9,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import type { Resolver } from "react-hook-form";
 import type { z } from "zod";
 import { SectionCard } from "./section-card";
+import { BillFromSection } from "./sections/bill-from-section";
 import { InvoiceMetaSection } from "./sections/invoice-meta-section";
 
 const DEFAULT_PAYMENT_TERMS_DAYS = 30;
@@ -44,6 +45,12 @@ function buildDefaultValues(
     attachments: [],
     sendCcEmails: [],
     notes: settings?.defaultNotes ?? "",
+    fromName: settings?.businessName ?? "",
+    fromEmail: settings?.businessEmail ?? "",
+    fromPhone: settings?.businessPhone ?? "",
+    fromAddress: settings?.businessAddress ?? "",
+    fromGstin: settings?.gstin ?? "",
+    fromPan: settings?.pan ?? "",
   };
 }
 
@@ -63,6 +70,9 @@ export function InvoiceForm({ settings, nextInvoiceNumber }: InvoiceFormProps) {
     console.log("submit", data);
   };
 
+  const isSettingsIncomplete =
+    !settings?.businessName || !settings?.businessEmail;
+
   return (
     <FormProvider {...methods}>
       <form
@@ -77,6 +87,20 @@ export function InvoiceForm({ settings, nextInvoiceNumber }: InvoiceFormProps) {
           >
             <SectionCard section={1} title="Invoice Details">
               <InvoiceMetaSection />
+            </SectionCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.08, ease: "easeOut" }}
+          >
+            <SectionCard section={2} title="Bill From">
+              <BillFromSection
+                logoUrl={settings?.logoUrl}
+                signatureUrl={settings?.signatureUrl}
+                isSettingsIncomplete={isSettingsIncomplete}
+              />
             </SectionCard>
           </motion.div>
         </div>
