@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 import { AuthError, ForbiddenError, requireAuth } from "@/lib/middleware/auth";
 import { applyRateLimit, RateLimitError } from "@/lib/middleware/rate-limit";
-import { uploadFile } from "@/lib/services/storage.service";
+import { uploadFile, StorageError } from "@/lib/services/storage.service";
 import { FileUploadSchema } from "@/lib/validators/file";
 import { NextResponse } from "next/server";
 
@@ -64,6 +64,13 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { success: false, error: "Forbidden", code: "FORBIDDEN" },
         { status: 403 },
+      );
+    }
+
+    if (error instanceof StorageError) {
+      return NextResponse.json(
+        { success: false, error: error.message, code: error.code },
+        { status: error.status },
       );
     }
 

@@ -48,7 +48,17 @@ export const InvoiceBaseSchema = z.object({
   template: z.enum(["minimal", "classic", "modern"]).default("minimal"),
   paymentTermsDays: z.number().int().nonnegative().optional().nullable(),
   taxLabel: z.string().max(50).default("Tax"),
-  attachments: z.array(z.url()).default([]),
+  attachments: z
+    .array(
+      z.object({
+        id: z.uuid(),
+        name: z.string(),
+        url: z.url(),
+        size: z.number(),
+        type: z.string(),
+      }),
+    )
+    .default([]),
   sendToEmail: z.email().optional().nullable(),
   sendCcEmails: z.array(z.email()).default([]),
   publicToken: z.string().optional().nullable(),

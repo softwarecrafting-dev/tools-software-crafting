@@ -1,6 +1,6 @@
 import { db } from "@/lib/db/client";
 import { rateLimits } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 /**
@@ -24,36 +24,21 @@ class CustomDbRateLimiter {
     const durationMs = this.duration * 1000;
     const expireAt = new Date(now.getTime() + durationMs);
 
-    const [result] = await db.transaction(async (tx) => {
-      const [existing] = await tx
-        .select()
-        .from(rateLimits)
-        .where(eq(rateLimits.key, rlKey))
-        .limit(1);
-
-      const isExpired =
-        !existing || (existing.expire && existing.expire <= now);
-      const newPoints = isExpired ? 1 : existing.points + 1;
-      const newExpire = isExpired ? expireAt : existing.expire;
-
-      const [updated] = await tx
-        .insert(rateLimits)
-        .values({
-          key: rlKey,
-          points: newPoints,
-          expire: newExpire,
-        })
-        .onConflictDoUpdate({
-          target: rateLimits.key,
-          set: {
-            points: newPoints,
-            expire: newExpire,
-          },
-        })
-        .returning();
-
-      return [updated];
-    });
+    const [result] = await db
+      .insert(rateLimits)
+      .values({
+        key: rlKey,
+        points: 1,
+        expire: expireAt,
+      })
+      .onConflictDoUpdate({
+        target: rateLimits.key,
+        set: {
+          points: sql`${rateLimits.points} + 1`,
+          expire: sql`CASE WHEN ${rateLimits.expire} <= ${now.toISOString()} THEN ${expireAt.toISOString()} ELSE ${rateLimits.expire} END`,
+        },
+      })
+      .returning();
 
     const res = new RateLimiterRes();
     // Use type assertion to bypass read-only properties in TypeScript definitions

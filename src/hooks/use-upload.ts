@@ -79,6 +79,6 @@ export function useUpload(options?: UseUploadOptions) {
   return {
     ...mutation,
     progress,
-    upload: mutation.mutateAsync,
+    upload: mutation.mutate,
   };
 }
