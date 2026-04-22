@@ -76,6 +76,8 @@ export const InvoiceBaseSchema = z.object({
   ifscCode: z.string().max(20).optional().nullable(),
   upiId: z.string().max(255).optional().nullable(),
   swiftBic: z.string().max(20).optional().nullable(),
+  logoUrl: z.url().optional().nullable(),
+  signatureUrl: z.url().optional().nullable(),
 });
 
 export const InvoiceCreateSchema = InvoiceBaseSchema.refine(

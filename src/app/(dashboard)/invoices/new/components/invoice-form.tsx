@@ -1,13 +1,11 @@
 "use client";
 
-import type { UserSettingsRecord } from "@/lib/db/repositories/types";
 import { InvoiceBaseSchema } from "@/lib/validators/invoice";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { addDays, startOfDay } from "date-fns";
 import { motion } from "motion/react";
-import { FormProvider, useForm } from "react-hook-form";
-import type { Resolver } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import type { z } from "zod";
+import type { UserSettingsRecord } from "@/lib/db/repositories/types";
+import { addDays, startOfDay } from "date-fns";
 import { SectionCard } from "./section-card";
 import { BillFromSection } from "./sections/bill-from-section";
 import { BillToSection } from "./sections/bill-to-section";
@@ -21,7 +19,6 @@ import { TotalsSection } from "./sections/totals-section";
 const DEFAULT_PAYMENT_TERMS_DAYS = 30;
 
 export type InvoiceFormValues = z.output<typeof InvoiceBaseSchema>;
-type InvoiceFormInput = z.input<typeof InvoiceBaseSchema>;
 
 function buildDefaultValues(
   settings: UserSettingsRecord | null | undefined,
@@ -74,120 +71,115 @@ function buildDefaultValues(
     ifscCode: settings?.bankIfsc ?? "",
     upiId: settings?.bankUpiId ?? "",
     swiftBic: settings?.swiftBic ?? "",
+    logoUrl: settings?.logoUrl,
+    signatureUrl: settings?.signatureUrl,
   };
 }
 
-interface InvoiceFormProps {
-  settings: UserSettingsRecord | null | undefined;
-  nextInvoiceNumber: string | undefined;
-}
-
-export function InvoiceForm({ settings, nextInvoiceNumber }: InvoiceFormProps) {
-  const methods = useForm<InvoiceFormValues, unknown, InvoiceFormValues>({
-    resolver: zodResolver(InvoiceBaseSchema) as Resolver<InvoiceFormValues>,
-    defaultValues: buildDefaultValues(settings, nextInvoiceNumber) as InvoiceFormInput,
-    mode: "onBlur",
-  });
+export function InvoiceForm({ 
+  isSettingsIncomplete, 
+  logoUrl, 
+  signatureUrl 
+}: { 
+  isSettingsIncomplete: boolean; 
+  logoUrl?: string | null; 
+  signatureUrl?: string | null;
+}) {
+  const { handleSubmit } = useFormContext<InvoiceFormValues>();
 
   const onSubmit = (data: InvoiceFormValues) => {
-    console.log("submit", data);
+    console.log("Submit invoice form", data);
   };
 
-  const isSettingsIncomplete =
-    !settings?.businessName || !settings?.businessEmail;
-
   return (
-    <FormProvider {...methods}>
-      <form
-        onSubmit={methods.handleSubmit(onSubmit)}
-        noValidate
-      >
-        <div className="space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.04, ease: "easeOut" }}
-          >
-            <SectionCard section={1} title="Invoice Details">
-              <InvoiceMetaSection />
-            </SectionCard>
-          </motion.div>
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="pb-12">
+      <div className="space-y-4">
+        <motion.div
+           initial={{ opacity: 0, y: 8 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.25, delay: 0.04, ease: "easeOut" }}
+        >
+          <SectionCard section={1} title="Invoice Details">
+            <InvoiceMetaSection />
+          </SectionCard>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.08, ease: "easeOut" }}
-          >
-            <SectionCard section={2} title="Bill From">
-              <BillFromSection
-                logoUrl={settings?.logoUrl}
-                signatureUrl={settings?.signatureUrl}
-                isSettingsIncomplete={isSettingsIncomplete}
-              />
-            </SectionCard>
-          </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.08, ease: "easeOut" }}
+        >
+          <SectionCard section={2} title="Bill From">
+            <BillFromSection
+              logoUrl={logoUrl}
+              signatureUrl={signatureUrl}
+              isSettingsIncomplete={isSettingsIncomplete}
+            />
+          </SectionCard>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.12, ease: "easeOut" }}
-          >
-            <SectionCard section={3} title="Bill To">
-              <BillToSection />
-            </SectionCard>
-          </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.12, ease: "easeOut" }}
+        >
+          <SectionCard section={3} title="Bill To">
+            <BillToSection />
+          </SectionCard>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.16, ease: "easeOut" }}
-          >
-            <SectionCard section={4} title="Line Items">
-              <LineItemsSection />
-            </SectionCard>
-          </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.16, ease: "easeOut" }}
+        >
+          <SectionCard section={4} title="Line Items">
+             <LineItemsSection />
+          </SectionCard>
+        </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.2, ease: "easeOut" }}
-          >
-            <SectionCard section={5} title="Payment Details">
-              <PaymentDetailsSection />
-            </SectionCard>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.24, ease: "easeOut" }}
-          >
-            <SectionCard section={6} title="Notes & Terms">
-              <NotesTermsSection />
-            </SectionCard>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.28, ease: "easeOut" }}
-          >
-            <SectionCard section={7} title="Attachments">
-              <AttachmentsSection />
-            </SectionCard>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.32, ease: "easeOut" }}
-          >
-            <SectionCard section={8} title="Summary & Totals">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.20, ease: "easeOut" }}
+        >
+           <SectionCard section={5} title="Summary">
               <TotalsSection />
-            </SectionCard>
-          </motion.div>
-        </div>
-      </form>
-    </FormProvider>
+           </SectionCard>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.24, ease: "easeOut" }}
+        >
+          <SectionCard section={6} title="Payment Details">
+             <PaymentDetailsSection />
+          </SectionCard>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.28, ease: "easeOut" }}
+        >
+           <SectionCard section={7} title="Notes & Terms">
+              <NotesTermsSection />
+           </SectionCard>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.32, ease: "easeOut" }}
+        >
+           <SectionCard section={8} title="Attachments">
+              <AttachmentsSection />
+           </SectionCard>
+        </motion.div>
+      </div>
+    </form>
   );
 }
+
+export { buildDefaultValues };
