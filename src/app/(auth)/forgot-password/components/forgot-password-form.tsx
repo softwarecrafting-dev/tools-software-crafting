@@ -16,13 +16,12 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useForgotPassword } from "@/hooks/use-auth";
 import {
   ForgotPasswordSchema,
   type ForgotPasswordInput,
 } from "@/lib/validators/user";
-import { apiClient } from "@/lib/api-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -47,26 +46,19 @@ export function ForgotPasswordForm() {
     defaultValues: { email: "" },
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: ForgotPasswordInput) => {
-      await apiClient.post("/auth/forgot-password", data);
-    },
-
-    retry: false,
-
-    onSuccess: () => {
-      setSuccess(true);
-    },
-
-    onError: (error) => {
-      setBanner({ type: "error", message: getAuthError(error) });
-      triggerShake();
-    },
-  });
+  const { mutate, isPending } = useForgotPassword();
 
   function onSubmit(data: ForgotPasswordInput) {
     setBanner(null);
-    mutate(data);
+
+    mutate(data, {
+      onSuccess: () => setSuccess(true),
+
+      onError: (error) => {
+        setBanner({ type: "error", message: getAuthError(error) });
+        triggerShake();
+      },
+    });
   }
 
   function triggerShake() {

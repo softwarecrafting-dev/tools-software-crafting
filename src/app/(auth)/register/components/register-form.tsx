@@ -18,10 +18,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { apiClient, ApiError } from "@/lib/api-client";
+import { useRegister } from "@/hooks/use-auth";
+import { ApiError } from "@/lib/api-client";
 import { RegisterSchema, type RegisterInput } from "@/lib/validators/user";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -49,17 +49,22 @@ const strengthColors: Record<PasswordStrength, string> = {
 
 export function computeStrength(password: string): PasswordStrength {
   if (!password) return 0;
+
   let score = 0;
+
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
   if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
   if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) score++;
+
   return Math.min(score, 4) as PasswordStrength;
 }
 
 export function PasswordStrengthBar({ password }: { password: string }) {
   const strength = computeStrength(password);
+
   if (!password) return null;
+
   return (
     <div className="mt-2 space-y-1">
       <div className="flex gap-1">
@@ -72,6 +77,7 @@ export function PasswordStrengthBar({ password }: { password: string }) {
           />
         ))}
       </div>
+
       {strength > 0 && (
         <p
           className={`text-xs font-medium ${
@@ -97,6 +103,7 @@ export function PasswordInput({
   ...props
 }: React.ComponentProps<typeof Input> & { id: string }) {
   const [show, setShow] = React.useState(false);
+
   return (
     <div className="relative">
       <Input
@@ -106,6 +113,7 @@ export function PasswordInput({
         placeholder={placeholder}
         className="pr-10"
       />
+
       <button
         type="button"
         onClick={() => setShow((s) => !s)}
@@ -161,6 +169,7 @@ export function AlertBanner({
       }`}
     >
       <AlertCircle size={15} className="mt-0.5 shrink-0" />
+
       <span>{children}</span>
     </motion.div>
   );
@@ -188,35 +197,30 @@ export function RegisterForm() {
 
   const password = form.watch("password");
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: RegisterInput) => {
-      await apiClient.post("/auth/register", data);
-
-      return data;
-    },
-
-    retry: false,
-
-    onSuccess: (data) => {
-      router.push(
-        `/register/verify-prompt?email=${encodeURIComponent(data.email)}`,
-      );
-    },
-
-    onError: (error) => {
-      if (error instanceof ApiError && error.code === "EMAIL_ALREADY_EXISTS") {
-        setBanner({ type: "warning", message: error.message });
-      } else {
-        setBanner({ type: "error", message: getAuthError(error) });
-
-        triggerShake();
-      }
-    },
-  });
+  const { mutate, isPending } = useRegister();
 
   function onSubmit(data: RegisterInput) {
     setBanner(null);
-    mutate(data);
+
+    mutate(data, {
+      onSuccess: (result) => {
+        router.push(
+          `/register/verify-prompt?email=${encodeURIComponent(result.email)}`,
+        );
+      },
+
+      onError: (error) => {
+        if (
+          error instanceof ApiError &&
+          error.code === "EMAIL_ALREADY_EXISTS"
+        ) {
+          setBanner({ type: "warning", message: error.message });
+        } else {
+          setBanner({ type: "error", message: getAuthError(error) });
+          triggerShake();
+        }
+      },
+    });
   }
 
   function triggerShake() {

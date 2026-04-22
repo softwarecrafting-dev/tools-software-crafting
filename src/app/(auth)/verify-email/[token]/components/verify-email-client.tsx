@@ -10,43 +10,49 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { apiClient, ApiError } from "@/lib/api-client";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Clock, Info, XCircle } from "lucide-react";
 import Link from "next/link";
 
-export type VerifyResponse = {
-  status: number;
-  success?: boolean;
-  code?:
-    | "ALREADY_VERIFIED"
-    | "TOKEN_EXPIRED"
-    | "INVALID_TOKEN"
-    | "INTERNAL_ERROR";
+type VerifyCode =
+  | "ALREADY_VERIFIED"
+  | "TOKEN_EXPIRED"
+  | "INVALID_TOKEN"
+  | "INTERNAL_ERROR";
+
+export type VerifyResult = {
+  verified: boolean;
+  code?: VerifyCode;
   message?: string;
-  error?: string;
 };
 
 export function VerifyEmailClient({ token }: { token: string }) {
-  const { data, error, isPending } = useQuery<VerifyResponse>({
+  const { data, error, isPending } = useQuery<VerifyResult>({
     queryKey: ["verify-email", token],
 
     queryFn: async () => {
-      const res = await fetch("/api/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+      try {
+        await apiClient.post("/auth/verify-email", { token });
 
-      const json = await res.json();
-      if (!res.ok && res.status !== 400 && res.status !== 200) {
-        throw new Error("INTERNAL_ERROR");
+        return { verified: true };
+      } catch (err) {
+        if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+          return {
+            verified: false,
+            code: err.code as VerifyCode,
+            message: err.message,
+          };
+        }
+
+        throw err;
       }
-
-      return { status: res.status, ...json };
     },
 
     retry: false,
     refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    gcTime: 0,
   });
 
   const renderState = () => {
@@ -66,7 +72,8 @@ export function VerifyEmailClient({ token }: { token: string }) {
       );
     }
 
-    if (error || data?.code === "INTERNAL_ERROR") {
+    // Network / server error (5xx) — query went into error state
+    if (error) {
       return (
         <Card className="shadow-lg border-border/60 text-center">
           <CardHeader className="space-y-4 items-center">
@@ -78,7 +85,8 @@ export function VerifyEmailClient({ token }: { token: string }) {
                 Error
               </CardTitle>
               <CardDescription className="text-sm leading-relaxed text-muted-foreground">
-                Something went wrong while verifying your email.
+                Something went wrong while verifying your email. Please try
+                again later.
               </CardDescription>
             </div>
           </CardHeader>
@@ -172,15 +180,18 @@ export function VerifyEmailClient({ token }: { token: string }) {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10">
             <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-500" />
           </div>
+
           <div className="space-y-2">
             <CardTitle className="text-2xl font-bold tracking-tight">
               Email verified!
             </CardTitle>
+
             <CardDescription className="text-sm leading-relaxed text-muted-foreground">
               Your account is now active. Let&apos;s set up your workspace.
             </CardDescription>
           </div>
         </CardHeader>
+
         <CardContent>
           <Button asChild className="w-full">
             <Link href="/onboarding">Continue to Setup</Link>

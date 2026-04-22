@@ -14,6 +14,9 @@ export function useDashboardStats() {
     },
 
     staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
   });
 }

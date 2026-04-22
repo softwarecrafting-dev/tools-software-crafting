@@ -15,6 +15,7 @@ import {
   useSettings,
   useUpdateSettings,
 } from "@/hooks/use-settings";
+import { ApiError } from "@/lib/api-client";
 import type { SettingsInput } from "@/lib/validators/settings";
 import { AlertCircle, RefreshCcw } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -65,26 +66,12 @@ export function OnboardingForm() {
         router.push("/dashboard");
       }
     } catch (error: unknown) {
-      console.error("Failed to update settings", error);
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : "Failed to save progress. Please try again.";
 
-      let message = "Failed to save progress. Please try again.";
-
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        typeof (error as { response?: { data?: { error?: string } } }).response
-          ?.data?.error === "string"
-      ) {
-        message = (error as { response: { data: { error: string } } }).response
-          .data.error;
-      }
-
-      setBanner({
-        type: "error",
-        message,
-      });
-
+      setBanner({ type: "error", message });
       triggerShake();
     }
   }

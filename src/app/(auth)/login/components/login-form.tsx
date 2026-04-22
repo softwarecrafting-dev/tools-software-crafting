@@ -16,10 +16,9 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { apiClient } from "@/lib/api-client";
+import { useLogin } from "@/hooks/use-auth";
 import { LoginSchema, type LoginInput } from "@/lib/validators/user";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -83,28 +82,22 @@ export function LoginForm() {
     mode: "onBlur",
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: LoginInput) => {
-      await apiClient.post("/auth/login", data);
-    },
-
-    retry: false,
-
-    onSuccess: () => {
-      router.push("/dashboard");
-      router.refresh();
-    },
-
-    onError: (error) => {
-      setBanner({ type: "error", message: getAuthError(error) });
-
-      triggerShake();
-    },
-  });
+  const { mutate, isPending } = useLogin();
 
   function onSubmit(data: LoginInput) {
     setBanner(null);
-    mutate(data);
+
+    mutate(data, {
+      onSuccess: () => {
+        router.push("/dashboard");
+        router.refresh();
+      },
+
+      onError: (error) => {
+        setBanner({ type: "error", message: getAuthError(error) });
+        triggerShake();
+      },
+    });
   }
 
   function triggerShake() {

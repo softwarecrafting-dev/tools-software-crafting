@@ -5,6 +5,7 @@ import {
   BannerVariant,
   PasswordInput,
   PasswordStrengthBar,
+  getAuthError,
 } from "@/app/(auth)/register/components/register-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,12 +23,12 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
+import { useResetPassword } from "@/hooks/use-auth";
 import {
   ResetPasswordSchema,
   type ResetPasswordInput,
 } from "@/lib/validators/user";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
@@ -49,47 +50,23 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   const password = form.watch("password");
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: ResetPasswordInput) => {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, token }),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(JSON.stringify(json));
-      }
-
-      return json;
-    },
-
-    onSuccess: () => {
-      setSuccess(true);
-    },
-
-    onError: (error) => {
-      try {
-        const json = JSON.parse(error.message);
-        setBanner({
-          type: "error",
-          message: json.error ?? "Something went wrong. Please try again.",
-        });
-        triggerShake();
-      } catch {
-        setBanner({
-          type: "error",
-          message: "Something went wrong. Please try again.",
-        });
-        triggerShake();
-      }
-    },
-  });
+  const { mutate, isPending } = useResetPassword();
 
   function onSubmit(data: ResetPasswordInput) {
     setBanner(null);
-    mutate(data);
+
+    mutate(
+      { ...data, token },
+
+      {
+        onSuccess: () => setSuccess(true),
+
+        onError: (error) => {
+          setBanner({ type: "error", message: getAuthError(error) });
+          triggerShake();
+        },
+      },
+    );
   }
 
   function triggerShake() {

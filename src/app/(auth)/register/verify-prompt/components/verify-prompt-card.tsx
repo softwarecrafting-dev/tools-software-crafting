@@ -9,12 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useMutation } from "@tanstack/react-query";
+import { useResendVerification } from "@/hooks/use-auth";
+import { ApiError } from "@/lib/api-client";
 import { Loader2, Mail } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import Link from "next/link";
 import * as React from "react";
-import { AlertBanner, BannerVariant } from "../../components/register-form";
+import {
+  AlertBanner,
+  BannerVariant,
+  getAuthError,
+} from "../../components/register-form";
 
 export function VerifyPromptCard({ email }: { email: string | null }) {
   const [countdown, setCountdown] = React.useState(0);
@@ -32,51 +37,36 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
     message: string;
   } | null>(null);
 
-  const { mutate: handleResend, isPending: sending } = useMutation({
-    mutationFn: async () => {
-      if (!email) throw new Error("No email provided");
+  const { mutate: handleResend, isPending: sending } = useResendVerification();
 
-      const res = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+  function onResendClick() {
+    if (!email || countdown > 0) return;
 
-      if (res.status === 429) {
-        throw new Error("RATE_LIMITED");
-      }
+    setBanner(null);
 
-      if (!res.ok) {
-        throw new Error("Request failed");
-      }
-
-      return res.json();
-    },
-
-    onSuccess: () => {
-      setCountdown(60);
-      setBanner({
-        type: "warning",
-        message: "Verification email resent. Please check your inbox.",
-      });
-    },
-
-    onError: (error) => {
-      if (error.message === "RATE_LIMITED") {
+    handleResend(email, {
+      onSuccess: () => {
         setCountdown(60);
         setBanner({
           type: "warning",
-          message:
-            "Too many requests. Please wait a minute before trying again.",
+          message: "Verification email resent. Please check your inbox.",
         });
-      } else {
-        setBanner({
-          type: "error",
-          message: "Something went wrong. Please try again.",
-        });
-      }
-    },
-  });
+      },
+
+      onError: (error) => {
+        if (error instanceof ApiError && error.status === 429) {
+          setCountdown(60);
+          setBanner({
+            type: "warning",
+            message:
+              "Too many requests. Please wait a minute before trying again.",
+          });
+        } else {
+          setBanner({ type: "error", message: getAuthError(error) });
+        }
+      },
+    });
+  }
 
   return (
     <div className="w-full max-w-lg">
@@ -114,11 +104,7 @@ export function VerifyPromptCard({ email }: { email: string | null }) {
 
           <Button
             variant="outline"
-            onClick={() => {
-              if (!email || countdown > 0) return;
-              setBanner(null);
-              handleResend();
-            }}
+            onClick={onResendClick}
             disabled={sending || countdown > 0 || !email}
             className="w-full"
           >
