@@ -78,6 +78,19 @@ export async function getNextInvoiceNumber(userId: string): Promise<string> {
   }
 }
 
+export async function checkInvoiceNumberExists(
+  userId: string,
+  invoiceNumber: string,
+): Promise<boolean> {
+  try {
+    return await invoiceRepo.checkNumberExists(userId, invoiceNumber.trim());
+  } catch (error) {
+    logger.error("Failed to check invoice number", { userId, error });
+
+    throw error;
+  }
+}
+
 export async function createInvoice(
   userId: string,
   data: z.infer<typeof InvoiceCreateSchema>,

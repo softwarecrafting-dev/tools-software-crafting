@@ -1,6 +1,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { DashboardHeader } from "./components/dashboard-header";
 import { DashboardSidebar } from "./components/dashboard-sidebar";
 
@@ -15,8 +16,11 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={defaultOpen}>
       <div className="relative flex min-h-screen w-full overflow-hidden">
         <DashboardSidebar />
 

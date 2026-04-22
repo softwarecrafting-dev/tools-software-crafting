@@ -63,6 +63,7 @@ export function InvoiceCreateClient() {
               className="h-full"
             >
               <SplitLayout
+                settings={settingsQuery.data}
                 nextInvoiceNumber={nextNumberQuery.data?.invoiceNumber}
               />
             </motion.div>
