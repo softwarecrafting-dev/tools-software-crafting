@@ -26,6 +26,40 @@ export async function create(data: NewInvoice): Promise<InvoiceRecord> {
   return invoice;
 }
 
+export interface ClientSuggestion {
+  clientName: string;
+  clientEmail: string;
+  clientCompany: string | null;
+  clientAddress: string | null;
+  clientGstin: string | null;
+}
+
+export async function getClientSuggestions(
+  userId: string,
+  query: string,
+): Promise<ClientSuggestion[]> {
+  const sanitizedQuery = query.replace(/[\\%_]/g, "\\$&");
+
+  return db
+    .selectDistinct({
+      clientName: invoices.clientName,
+      clientEmail: invoices.clientEmail,
+      clientCompany: invoices.clientCompany,
+      clientAddress: invoices.clientAddress,
+      clientGstin: invoices.clientGstin,
+    })
+    .from(invoices)
+    .where(
+      and(
+        eq(invoices.userId, userId),
+        isNull(invoices.deletedAt),
+        ilike(invoices.clientName, `${sanitizedQuery}%`),
+      ),
+    )
+    .orderBy(asc(invoices.clientName))
+    .limit(10);
+}
+
 export async function checkNumberExists(
   userId: string,
   invoiceNumber: string,

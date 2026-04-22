@@ -10,6 +10,7 @@ import type { Resolver } from "react-hook-form";
 import type { z } from "zod";
 import { SectionCard } from "./section-card";
 import { BillFromSection } from "./sections/bill-from-section";
+import { BillToSection } from "./sections/bill-to-section";
 import { InvoiceMetaSection } from "./sections/invoice-meta-section";
 
 const DEFAULT_PAYMENT_TERMS_DAYS = 30;
@@ -101,6 +102,15 @@ export function InvoiceForm({ settings, nextInvoiceNumber }: InvoiceFormProps) {
                 signatureUrl={settings?.signatureUrl}
                 isSettingsIncomplete={isSettingsIncomplete}
               />
+            </SectionCard>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.12, ease: "easeOut" }}
+          >
+            <SectionCard section={3} title="Bill To">
+              <BillToSection />
             </SectionCard>
           </motion.div>
         </div>

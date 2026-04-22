@@ -1,4 +1,5 @@
 import * as invoiceRepo from "@/lib/db/repositories/invoice.repo";
+import type { ClientSuggestion } from "@/lib/db/repositories/invoice.repo";
 import type { InvoiceRecord } from "@/lib/db/repositories/types";
 import { InvoiceNumberTakenError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
@@ -86,6 +87,21 @@ export async function checkInvoiceNumberExists(
     return await invoiceRepo.checkNumberExists(userId, invoiceNumber.trim());
   } catch (error) {
     logger.error("Failed to check invoice number", { userId, error });
+
+    throw error;
+  }
+}
+
+export type { ClientSuggestion };
+
+export async function getClientSuggestions(
+  userId: string,
+  query: string,
+): Promise<ClientSuggestion[]> {
+  try {
+    return await invoiceRepo.getClientSuggestions(userId, query.trim());
+  } catch (error) {
+    logger.error("Failed to get client suggestions", { userId, query, error });
 
     throw error;
   }
