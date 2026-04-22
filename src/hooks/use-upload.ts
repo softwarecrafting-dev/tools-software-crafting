@@ -18,13 +18,19 @@ interface UseUploadOptions {
   onProgress?: (progress: number) => void;
 }
 
-export function useUpload(options?: UseUploadOptions) {
+export function useUpload(defaultOptions?: UseUploadOptions) {
   const [progress, setProgress] = useState(0);
 
   const mutation = useMutation({
     mutationKey: ["upload"],
 
-    mutationFn: async (file: File) => {
+    mutationFn: async ({
+      file,
+      onProgress,
+    }: {
+      file: File;
+      onProgress?: (p: number) => void;
+    }) => {
       const validation = FileUploadSchema.safeParse({ file });
       if (!validation.success) {
         throw new Error(validation.error.issues[0].message);
@@ -37,17 +43,13 @@ export function useUpload(options?: UseUploadOptions) {
         "/upload",
         formData,
         {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-
+          headers: { "Content-Type": "multipart/form-data" },
           onUploadProgress: (progressEvent) => {
             const total = progressEvent.total || progressEvent.loaded;
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / total,
-            );
-            setProgress(percentCompleted);
-            options?.onProgress?.(percentCompleted);
+            const percent = Math.round((progressEvent.loaded * 100) / total);
+            setProgress(percent);
+            onProgress?.(percent);
+            defaultOptions?.onProgress?.(percent);
           },
         },
       );
@@ -55,10 +57,8 @@ export function useUpload(options?: UseUploadOptions) {
       return res.data;
     },
 
-    retry: false,
-
     onSuccess: (data) => {
-      options?.onSuccess?.(data);
+      defaultOptions?.onSuccess?.(data);
       setTimeout(() => setProgress(0), 1000);
     },
 
@@ -71,7 +71,11 @@ export function useUpload(options?: UseUploadOptions) {
             : "Failed to upload file";
 
       toast.error(message);
-      options?.onError?.(error instanceof Error ? error : new Error(message));
+
+      defaultOptions?.onError?.(
+        error instanceof Error ? error : new Error(message),
+      );
+
       setProgress(0);
     },
   });
@@ -79,6 +83,7 @@ export function useUpload(options?: UseUploadOptions) {
   return {
     ...mutation,
     progress,
-    upload: mutation.mutate,
+    upload: (file: File, options?: { onProgress?: (p: number) => void }) =>
+      mutation.mutateAsync({ file, onProgress: options?.onProgress }),
   };
 }

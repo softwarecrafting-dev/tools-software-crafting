@@ -51,3 +51,28 @@ export async function parseQuery<T>(
 
   return result.data;
 }
+
+export async function parseFormData<T>(
+  request: Request,
+  schema: ZodSchema<T>,
+): Promise<T> {
+  const formData = await request.formData().catch(() => {
+    throw new ValidationError([
+      { field: "file", message: "Invalid form data" },
+    ]);
+  });
+
+  const raw = Object.fromEntries(formData.entries());
+  const result = schema.safeParse(raw);
+
+  if (!result.success) {
+    const details = result.error.issues.map((e) => ({
+      field: e.path.join("."),
+      message: e.message,
+    }));
+
+    throw new ValidationError(details);
+  }
+
+  return result.data;
+}
