@@ -9,6 +9,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable(
   "users",
@@ -292,3 +293,59 @@ export const invoices = pgTable(
 
 export type Invoice = typeof invoices.$inferSelect;
 export type NewInvoice = typeof invoices.$inferInsert;
+
+export const uploadedFiles = pgTable(
+  "uploaded_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    invoiceId: uuid("invoice_id").references(() => invoices.id, {
+      onDelete: "set null",
+    }),
+    name: text("name").notNull(),
+    size: integer("size").notNull(),
+    type: text("type").notNull(),
+    key: text("key").notNull(),
+    url: text("url").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("idx_uploaded_files_user_id").on(table.userId),
+    index("idx_uploaded_files_created_at").on(table.createdAt),
+  ],
+);
+
+export type UploadedFile = typeof uploadedFiles.$inferSelect;
+export type NewUploadedFile = typeof uploadedFiles.$inferInsert;
+
+export const usersRelations = relations(users, ({ many }) => ({
+  invoices: many(invoices),
+  files: many(uploadedFiles),
+}));
+
+export const invoicesRelations = relations(invoices, ({ one, many }) => ({
+  user: one(users, {
+    fields: [invoices.userId],
+    references: [users.id],
+  }),
+  attachments: many(uploadedFiles),
+}));
+
+export const uploadedFilesRelations = relations(uploadedFiles, ({ one }) => ({
+  user: one(users, {
+    fields: [uploadedFiles.userId],
+    references: [users.id],
+  }),
+  invoice: one(invoices, {
+    fields: [uploadedFiles.invoiceId],
+    references: [invoices.id],
+  }),
+}));

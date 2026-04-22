@@ -64,6 +64,20 @@
       "when": 1776749808799,
       "tag": "0008_slim_korath",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776883401139,
+      "tag": "0009_slim_sue_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776884526977,
+      "tag": "0010_flat_lightspeed",
+      "breakpoints": true
     }
   ]
 }

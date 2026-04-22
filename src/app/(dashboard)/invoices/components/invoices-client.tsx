@@ -41,6 +41,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { memo, useCallback, useDeferredValue, useMemo, useState } from "react";
 import { type DateRange } from "react-day-picker";
@@ -213,10 +214,12 @@ export function InvoicesClient() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button className="shadow-sm hover:shadow-md transition-all shrink-0">
-            <Plus className=" h-4 w-4" />
-            New Invoice
-          </Button>
+          <Link href="/invoices/new">
+            <Button className="shadow-sm hover:shadow-md transition-all shrink-0">
+              <Plus className=" h-4 w-4" />
+              New Invoice
+            </Button>
+          </Link>
         </div>
       </div>
 

@@ -14,6 +14,7 @@ import { BillToSection } from "./sections/bill-to-section";
 import { InvoiceMetaSection } from "./sections/invoice-meta-section";
 import { LineItemsSection } from "./sections/line-items-section";
 import { NotesTermsSection } from "./sections/notes-terms-section";
+import { AttachmentsSection } from "./sections/attachments-section";
 import { PaymentDetailsSection } from "./sections/payment-details-section";
 import { TotalsSection } from "./sections/totals-section";
 
@@ -171,7 +172,17 @@ export function InvoiceForm({ settings, nextInvoiceNumber }: InvoiceFormProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.25, delay: 0.28, ease: "easeOut" }}
           >
-            <SectionCard section={7} title="Summary & Totals">
+            <SectionCard section={7} title="Attachments">
+              <AttachmentsSection />
+            </SectionCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.32, ease: "easeOut" }}
+          >
+            <SectionCard section={8} title="Summary & Totals">
               <TotalsSection />
             </SectionCard>
           </motion.div>
