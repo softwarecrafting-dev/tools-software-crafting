@@ -205,6 +205,7 @@ export const userSettings = pgTable(
     invoicePrefix: text("invoice_prefix").notNull().default("INV"),
     defaultPaymentTerms: text("default_payment_terms"),
     defaultNotes: text("default_notes"),
+    defaultTerms: text("default_terms"),
     swiftBic: text("swift_bic"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

@@ -90,6 +90,7 @@ export function BillToSection() {
         className="sm:col-span-2"
       >
         <FieldTitle>Client Name</FieldTitle>
+
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <div className="relative">
@@ -106,16 +107,18 @@ export function BillToSection() {
                 className="h-10 pr-8"
                 autoComplete="off"
               />
+
               {isFetching && (
                 <Loader2 className="absolute right-8 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
               )}
+
               {clientName && (
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 "
-                  onClick={handleClear}
+                  onMouseDown={handleClear}
                   tabIndex={-1}
                 >
                   <X className="h-3.5 w-3.5 text-muted-foreground" />
@@ -125,7 +128,7 @@ export function BillToSection() {
           </PopoverTrigger>
 
           <PopoverContent
-            className="w-[--radix-popover-trigger-width] p-0"
+            className=" p-0"
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
@@ -162,11 +165,13 @@ export function BillToSection() {
         </Popover>
 
         <FieldError errors={[errors.clientName as { message?: string }]} />
+
         {apiError && <FieldError>{(apiError as ApiError).message}</FieldError>}
       </Field>
 
       <Field data-invalid={!!errors.clientEmail}>
         <FieldTitle>Client Email</FieldTitle>
+
         <Input
           id="client-email"
           type="email"
@@ -175,11 +180,13 @@ export function BillToSection() {
           {...register("clientEmail")}
           aria-invalid={!!errors.clientEmail}
         />
+
         <FieldError errors={[errors.clientEmail as { message?: string }]} />
       </Field>
 
       <Field>
         <FieldTitle>Company</FieldTitle>
+
         <Input
           id="client-company"
           placeholder="Optional"
@@ -190,6 +197,7 @@ export function BillToSection() {
 
       <Field className="sm:col-span-2">
         <FieldTitle>Billing Address</FieldTitle>
+
         <ScrollArea className="h-12 rounded-lg border bg-background shadow-sm ring-offset-background focus-within:ring-ring/50 focus-within:ring-[3px] transition-all">
           <Textarea
             id="client-address"
@@ -203,6 +211,7 @@ export function BillToSection() {
       {showGstin && (
         <Field>
           <FieldTitle>Client GSTIN</FieldTitle>
+
           <Input
             id="client-gstin"
             placeholder="22AAAAA0000A1Z5"

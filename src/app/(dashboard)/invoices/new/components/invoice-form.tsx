@@ -12,6 +12,10 @@ import { SectionCard } from "./section-card";
 import { BillFromSection } from "./sections/bill-from-section";
 import { BillToSection } from "./sections/bill-to-section";
 import { InvoiceMetaSection } from "./sections/invoice-meta-section";
+import { LineItemsSection } from "./sections/line-items-section";
+import { NotesTermsSection } from "./sections/notes-terms-section";
+import { PaymentDetailsSection } from "./sections/payment-details-section";
+import { TotalsSection } from "./sections/totals-section";
 
 const DEFAULT_PAYMENT_TERMS_DAYS = 30;
 
@@ -42,16 +46,33 @@ function buildDefaultValues(
     taxAmount: 0,
     total: 0,
     template: "minimal",
-    lineItems: [],
+    lineItems: [
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        description: "",
+        quantity: 1,
+        unit: "hrs",
+        rate: 0,
+        amount: 0,
+      },
+    ],
     attachments: [],
     sendCcEmails: [],
     notes: settings?.defaultNotes ?? "",
+    terms: (settings as UserSettingsRecord & { defaultTerms?: string | null })?.defaultTerms ?? "",
     fromName: settings?.businessName ?? "",
     fromEmail: settings?.businessEmail ?? "",
     fromPhone: settings?.businessPhone ?? "",
     fromAddress: settings?.businessAddress ?? "",
     fromGstin: settings?.gstin ?? "",
     fromPan: settings?.pan ?? "",
+    bankName: settings?.bankName ?? "",
+    accountName: settings?.businessName ?? "",
+    accountNumber: settings?.bankAccountNumber ?? "",
+    ifscCode: settings?.bankIfsc ?? "",
+    upiId: settings?.bankUpiId ?? "",
+    swiftBic: settings?.swiftBic ?? "",
   };
 }
 
@@ -104,6 +125,7 @@ export function InvoiceForm({ settings, nextInvoiceNumber }: InvoiceFormProps) {
               />
             </SectionCard>
           </motion.div>
+
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -111,6 +133,46 @@ export function InvoiceForm({ settings, nextInvoiceNumber }: InvoiceFormProps) {
           >
             <SectionCard section={3} title="Bill To">
               <BillToSection />
+            </SectionCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.16, ease: "easeOut" }}
+          >
+            <SectionCard section={4} title="Line Items">
+              <LineItemsSection />
+            </SectionCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.2, ease: "easeOut" }}
+          >
+            <SectionCard section={5} title="Payment Details">
+              <PaymentDetailsSection />
+            </SectionCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.24, ease: "easeOut" }}
+          >
+            <SectionCard section={6} title="Notes & Terms">
+              <NotesTermsSection />
+            </SectionCard>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.28, ease: "easeOut" }}
+          >
+            <SectionCard section={7} title="Summary & Totals">
+              <TotalsSection />
             </SectionCard>
           </motion.div>
         </div>

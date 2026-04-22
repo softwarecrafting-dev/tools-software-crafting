@@ -10,7 +10,7 @@ interface SectionCardProps {
 
 export function SectionCard({ section, title, children }: SectionCardProps) {
   return (
-    <div className="rounded-xl border bg-card overflow-hidden">
+    <div className="rounded-xl border bg-muted/50  dark:bg-muted/10 overflow-hidden">
       <div className="flex items-center gap-3 px-5 py-4 border-b bg-muted/20">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
           {section}

@@ -60,6 +60,12 @@ export const InvoiceBaseSchema = z.object({
   fromAddress: z.string().max(1000).optional().nullable(),
   fromGstin: z.string().max(20).optional().nullable(),
   fromPan: z.string().max(20).optional().nullable(),
+  bankName: z.string().max(255).optional().nullable(),
+  accountName: z.string().max(255).optional().nullable(),
+  accountNumber: z.string().max(50).optional().nullable(),
+  ifscCode: z.string().max(20).optional().nullable(),
+  upiId: z.string().max(255).optional().nullable(),
+  swiftBic: z.string().max(20).optional().nullable(),
 });
 
 export const InvoiceCreateSchema = InvoiceBaseSchema.refine(
