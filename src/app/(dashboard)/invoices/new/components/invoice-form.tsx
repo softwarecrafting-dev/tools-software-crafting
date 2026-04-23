@@ -1,18 +1,18 @@
 "use client";
 
+import type { UserSettingsRecord } from "@/lib/db/repositories/types";
 import { InvoiceBaseSchema } from "@/lib/validators/invoice";
+import { addDays, startOfDay } from "date-fns";
 import { motion } from "motion/react";
 import { useFormContext } from "react-hook-form";
 import type { z } from "zod";
-import type { UserSettingsRecord } from "@/lib/db/repositories/types";
-import { addDays, startOfDay } from "date-fns";
 import { SectionCard } from "./section-card";
+import { AttachmentsSection } from "./sections/attachments-section";
 import { BillFromSection } from "./sections/bill-from-section";
 import { BillToSection } from "./sections/bill-to-section";
 import { InvoiceMetaSection } from "./sections/invoice-meta-section";
 import { LineItemsSection } from "./sections/line-items-section";
 import { NotesTermsSection } from "./sections/notes-terms-section";
-import { AttachmentsSection } from "./sections/attachments-section";
 import { PaymentDetailsSection } from "./sections/payment-details-section";
 import { TotalsSection } from "./sections/totals-section";
 
@@ -58,7 +58,9 @@ function buildDefaultValues(
     attachments: [],
     sendCcEmails: [],
     notes: settings?.defaultNotes ?? "",
-    terms: (settings as UserSettingsRecord & { defaultTerms?: string | null })?.defaultTerms ?? "",
+    terms:
+      (settings as UserSettingsRecord & { defaultTerms?: string | null })
+        ?.defaultTerms ?? "",
     fromName: settings?.businessName ?? "",
     fromEmail: settings?.businessEmail ?? "",
     fromPhone: settings?.businessPhone ?? "",
@@ -76,13 +78,13 @@ function buildDefaultValues(
   };
 }
 
-export function InvoiceForm({ 
-  isSettingsIncomplete, 
-  logoUrl, 
-  signatureUrl 
-}: { 
-  isSettingsIncomplete: boolean; 
-  logoUrl?: string | null; 
+export function InvoiceForm({
+  isSettingsIncomplete,
+  logoUrl,
+  signatureUrl,
+}: {
+  isSettingsIncomplete: boolean;
+  logoUrl?: string | null;
   signatureUrl?: string | null;
 }) {
   const { handleSubmit } = useFormContext<InvoiceFormValues>();
@@ -92,12 +94,12 @@ export function InvoiceForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="pb-12">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <div className="space-y-4">
         <motion.div
-           initial={{ opacity: 0, y: 8 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.25, delay: 0.04, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: 0.04, ease: "easeOut" }}
         >
           <SectionCard section={1} title="Invoice Details">
             <InvoiceMetaSection />
@@ -134,18 +136,18 @@ export function InvoiceForm({
           transition={{ duration: 0.25, delay: 0.16, ease: "easeOut" }}
         >
           <SectionCard section={4} title="Line Items">
-             <LineItemsSection />
+            <LineItemsSection />
           </SectionCard>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25, delay: 0.20, ease: "easeOut" }}
+          transition={{ duration: 0.25, delay: 0.2, ease: "easeOut" }}
         >
-           <SectionCard section={5} title="Summary">
-              <TotalsSection />
-           </SectionCard>
+          <SectionCard section={5} title="Summary">
+            <TotalsSection />
+          </SectionCard>
         </motion.div>
 
         <motion.div
@@ -154,7 +156,7 @@ export function InvoiceForm({
           transition={{ duration: 0.25, delay: 0.24, ease: "easeOut" }}
         >
           <SectionCard section={6} title="Payment Details">
-             <PaymentDetailsSection />
+            <PaymentDetailsSection />
           </SectionCard>
         </motion.div>
 
@@ -163,9 +165,9 @@ export function InvoiceForm({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.28, ease: "easeOut" }}
         >
-           <SectionCard section={7} title="Notes & Terms">
-              <NotesTermsSection />
-           </SectionCard>
+          <SectionCard section={7} title="Notes & Terms">
+            <NotesTermsSection />
+          </SectionCard>
         </motion.div>
 
         <motion.div
@@ -173,9 +175,9 @@ export function InvoiceForm({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, delay: 0.32, ease: "easeOut" }}
         >
-           <SectionCard section={8} title="Attachments">
-              <AttachmentsSection />
-           </SectionCard>
+          <SectionCard section={8} title="Attachments">
+            <AttachmentsSection />
+          </SectionCard>
         </motion.div>
       </div>
     </form>

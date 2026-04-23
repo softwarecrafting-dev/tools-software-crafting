@@ -78,6 +78,13 @@
       "when": 1776884526977,
       "tag": "0010_flat_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776935560548,
+      "tag": "0011_thick_cargill",
+      "breakpoints": true
     }
   ]
 }

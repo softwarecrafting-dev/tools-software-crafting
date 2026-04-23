@@ -25,6 +25,7 @@ export const InvoiceLineItemSchema = z.object({
 export type InvoiceLineItemInput = z.infer<typeof InvoiceLineItemSchema>;
 
 export const InvoiceBaseSchema = z.object({
+  id: z.uuid().optional().nullable(),
   clientName: z.string().trim().min(1, "Client name is required").max(255),
   clientEmail: z.email("Invalid client email").max(255).trim(),
   clientCompany: z.string().max(255).optional().nullable(),

@@ -1,15 +1,15 @@
 "use client";
 
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { UserSettingsRecord } from "@/lib/db/repositories/types";
+import { InvoiceBaseSchema } from "@/lib/validators/invoice";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { Resolver } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { FormCTABar } from "./form-cta-bar";
+import type { InvoiceFormValues } from "./invoice-form";
 import { InvoiceForm, buildDefaultValues } from "./invoice-form";
 import { InvoicePreview } from "./invoice-preview";
-import { FormProvider, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { InvoiceBaseSchema } from "@/lib/validators/invoice";
-import type { InvoiceFormValues } from "./invoice-form";
-import type { Resolver } from "react-hook-form";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SplitLayoutProps {
   settings: UserSettingsRecord | null | undefined;
@@ -23,34 +23,32 @@ export function SplitLayout({ settings, nextInvoiceNumber }: SplitLayoutProps) {
     mode: "onBlur",
   });
 
-  const isSettingsIncomplete = !settings?.businessName || !settings?.businessEmail;
+  const isSettingsIncomplete =
+    !settings?.businessName || !settings?.businessEmail;
 
   return (
     <FormProvider {...methods}>
-      <div className="grid grid-cols-1 lg:grid-cols-[60fr_40fr] gap-0 h-full border-t">
+      <div className="grid grid-cols-1 lg:grid-cols-[60fr_40fr] gap-0 h-full overflow-hidden">
         <div
           id="form-column"
-          className="overflow-y-auto border-r bg-muted/5"
-          style={{ maxHeight: "calc(100vh - 4rem - 65px)" }}
+          className="relative flex flex-col  h-full min-h-0"
         >
-          <div className="p-6 pb-24">
-            <InvoiceForm 
-              isSettingsIncomplete={isSettingsIncomplete}
-              logoUrl={settings?.logoUrl}
-              signatureUrl={settings?.signatureUrl}
-            />
-          </div>
+          <ScrollArea className="h-full">
+            <div className="px-4 pb-24">
+              <InvoiceForm
+                isSettingsIncomplete={isSettingsIncomplete}
+                logoUrl={settings?.logoUrl}
+                signatureUrl={settings?.signatureUrl}
+              />
+            </div>
+          </ScrollArea>
 
           <FormCTABar />
         </div>
 
-        <div
-          id="preview-column"
-          className="hidden lg:block bg-muted/20"
-          style={{ maxHeight: "calc(100vh - 4rem - 65px)" }}
-        >
+        <div id="preview-column" className="hidden lg:block  h-full min-h-0">
           <ScrollArea className="h-full">
-            <div className="p-8">
+            <div className="px-4">
               <InvoicePreview />
             </div>
           </ScrollArea>

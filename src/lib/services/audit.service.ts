@@ -20,6 +20,7 @@ export type AuditAction =
   | "password_reset_requested"
   | "resend_verification"
   | "onboarding_completed"
+  | "invoice_pdf_downloaded"
   | "account_deleted";
 
 export interface AuditOptions {

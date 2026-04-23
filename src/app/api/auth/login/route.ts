@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     await applyRateLimit(ipAddress, {
       name: "auth_login",
-      points: 5,
+      points: process.env.NODE_ENV === "development" ? 50 : 5,
       duration: 60,
     });
 

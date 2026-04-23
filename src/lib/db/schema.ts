@@ -273,6 +273,12 @@ export const invoices = pgTable(
     publicToken: text("public_token").unique(),
     notes: text("notes"),
     terms: text("terms"),
+    fromName: text("from_name"),
+    fromEmail: text("from_email"),
+    fromPhone: text("from_phone"),
+    fromAddress: text("from_address"),
+    fromGstin: text("from_gstin"),
+    fromPan: text("from_pan"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

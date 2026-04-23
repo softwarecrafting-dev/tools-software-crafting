@@ -12,16 +12,11 @@ export function PageHeader() {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
+      className="sticky top-0 z-20 "
     >
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-3 min-w-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="shrink-0 rounded-lg"
-          >
+      <div className="flex items-center justify-between pb-4">
+        <div className="flex items-center gap-1 min-w-0">
+          <Button variant="ghost" size="icon" asChild className="">
             <Link href="/invoices" aria-label="Back to invoices">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -31,6 +26,7 @@ export function PageHeader() {
             <h1 className="text-lg font-semibold tracking-tight truncate">
               Create Invoice
             </h1>
+
             <StatusBadge status="draft" />
           </div>
         </div>
@@ -39,16 +35,13 @@ export function PageHeader() {
           <Button
             id="save-draft-btn-header"
             variant="outline"
-            className="hidden sm:flex shadow-sm hover:shadow-md transition-all"
+            className="hidden sm:flex "
           >
             <FileText className="h-4 w-4" />
             Save Draft
           </Button>
 
-          <Button
-            id="send-invoice-btn-header"
-            className="shadow-sm hover:shadow-md transition-all"
-          >
+          <Button id="send-invoice-btn-header" className="">
             <Send className="h-4 w-4" />
             Send Invoice
           </Button>

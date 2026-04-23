@@ -33,7 +33,7 @@ export default function InvoiceCreateError({
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] items-center justify-center p-6">
+    <div className="flex  items-center justify-center p-6">
       <Card className="mx-auto max-w-[420px] w-full text-center border-dashed bg-card/30 backdrop-blur-[2px]">
         <CardHeader className="flex flex-col items-center pt-8">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 ring-1 ring-destructive/20 ring-inset">
@@ -67,4 +67,3 @@ export default function InvoiceCreateError({
     </div>
   );
 }
-

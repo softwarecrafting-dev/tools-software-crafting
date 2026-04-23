@@ -23,10 +23,10 @@ export function InvoiceCreateClient() {
   };
 
   return (
-    <div className="flex flex-col" style={{ minHeight: "calc(100vh - 4rem)" }}>
+    <div className="flex flex-col h-[calc(100vh-5rem)] overflow-hidden">
       <PageHeader />
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0">
         <AnimatePresence mode="wait">
           {isLoading ? (
             <motion.div

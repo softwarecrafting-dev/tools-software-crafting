@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   try {
     await applyRateLimit(`register:${ip}`, {
       name: "register",
-      points: 5,
+      points: process.env.NODE_ENV === "development" ? 50 : 5,
       duration: 3600,
     });
 

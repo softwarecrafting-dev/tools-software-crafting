@@ -5,24 +5,23 @@ import { FileText, Send } from "lucide-react";
 
 export function FormCTABar() {
   return (
-    <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center justify-end gap-2 px-6 py-3">
-        <Button
-          id="save-draft-btn-form"
-          variant="outline"
-          className="shadow-sm hover:shadow-md transition-all active:scale-95"
-        >
-          <FileText className="h-4 w-4" />
-          Save Draft
-        </Button>
+    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-3rem)] max-w-2xl px-6 py-4 bg-background/10 backdrop-blur-lg rounded-2xl border shadow-md ">
+      <div className="flex items-center justify-between gap-4">
+        <div className="text-sm font-medium text-muted-foreground hidden sm:block">
+          All changes saved
+        </div>
 
-        <Button
-          id="send-invoice-btn-form"
-          className="shadow-sm hover:shadow-md transition-all active:scale-95"
-        >
-          <Send className="h-4 w-4" />
-          Send Invoice
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button id="save-draft-btn-form" variant="outline" className="h-10 ">
+            <FileText className="h-4 w-4" />
+            Save Draft
+          </Button>
+
+          <Button id="send-invoice-btn-form" className="h-10 ">
+            <Send className="h-4 w-4 " />
+            Send Invoice
+          </Button>
+        </div>
       </div>
     </div>
   );

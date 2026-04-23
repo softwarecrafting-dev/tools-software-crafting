@@ -1,5 +1,5 @@
-import * as invoiceRepo from "@/lib/db/repositories/invoice.repo";
 import type { ClientSuggestion } from "@/lib/db/repositories/invoice.repo";
+import * as invoiceRepo from "@/lib/db/repositories/invoice.repo";
 import type { InvoiceRecord } from "@/lib/db/repositories/types";
 import { InvoiceNumberTakenError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
@@ -123,17 +123,22 @@ export async function createInvoice(
     }
 
     const {
+      id: _unusedId,
       taxRate,
       taxAmount,
       discountValue,
       discountAmount,
       subtotal,
       total,
+      fromPan,
       ...rest
     } = data;
 
+    void _unusedId;
+
     const invoice = await invoiceRepo.create({
       ...rest,
+      fromPan: fromPan ?? undefined,
       userId,
       status: "draft",
       issueDate: new Date(data.issueDate),
@@ -164,7 +169,7 @@ export async function createInvoice(
 
     return invoice;
   } catch (error) {
-    logger.error("Failed to create invoice", { userId, data, error });
+    logger.error("Failed to create invoice", { userId, error });
 
     throw error;
   }

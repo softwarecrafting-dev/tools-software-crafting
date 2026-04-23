@@ -31,6 +31,7 @@ export async function parseBody<T>(
 
   return result.data;
 }
+
 export async function parseQuery<T>(
   request: Request,
   schema: ZodSchema<T>,
@@ -64,6 +65,25 @@ export async function parseFormData<T>(
 
   const raw = Object.fromEntries(formData.entries());
   const result = schema.safeParse(raw);
+
+  if (!result.success) {
+    const details = result.error.issues.map((e) => ({
+      field: e.path.join("."),
+      message: e.message,
+    }));
+
+    throw new ValidationError(details);
+  }
+
+  return result.data;
+}
+
+export async function parseParams<T>(
+  params: Promise<unknown> | unknown,
+  schema: ZodSchema<T>,
+): Promise<T> {
+  const resolvedParams = await (params instanceof Promise ? params : Promise.resolve(params));
+  const result = schema.safeParse(resolvedParams);
 
   if (!result.success) {
     const details = result.error.issues.map((e) => ({
