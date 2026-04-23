@@ -168,6 +168,7 @@ function FileBadge({
         type="button"
         onClick={onRemove}
         className="flex size-5 items-center justify-center rounded-full text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive"
+        aria-label={`Remove attachment: ${file.name}`}
       >
         <X className="size-2.5" />
       </button>

@@ -53,7 +53,7 @@ export default function InvoiceCreateError({
             onClick={handleReset}
             variant="outline"
             disabled={isResetting}
-            className="shadow-sm hover:shadow-md transition-all active:scale-95"
+            className=""
           >
             {isResetting ? (
               <Loader2 className="h-4 w-4 animate-spin" />

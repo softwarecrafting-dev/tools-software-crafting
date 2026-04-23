@@ -79,7 +79,8 @@ export const InvoiceBaseSchema = z.object({
   swiftBic: z.string().max(20).optional().nullable(),
   logoUrl: z.url().optional().nullable(),
   signatureUrl: z.url().optional().nullable(),
-});
+  status: InvoiceStatusEnum.optional(),
+}).strict();
 
 export const InvoiceCreateSchema = InvoiceBaseSchema.refine(
   (data) => new Date(data.dueDate) >= new Date(data.issueDate),
@@ -91,7 +92,7 @@ export const InvoiceCreateSchema = InvoiceBaseSchema.refine(
 
 export type InvoiceCreateInput = z.infer<typeof InvoiceCreateSchema>;
 
-export const InvoiceUpdateSchema = InvoiceBaseSchema.partial();
+export const InvoiceUpdateSchema = InvoiceBaseSchema.partial().strict();
 export type InvoiceUpdateInput = z.infer<typeof InvoiceUpdateSchema>;
 
 export const InvoiceFiltersSchema = z.object({

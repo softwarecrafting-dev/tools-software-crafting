@@ -1,3 +1,5 @@
+import { env } from "@/lib/env";
+import { InvoiceNumberTakenError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
 import { AuthError, ForbiddenError, requireAuth } from "@/lib/middleware/auth";
 import { applyRateLimit, RateLimitError } from "@/lib/middleware/rate-limit";
@@ -7,7 +9,6 @@ import {
   ValidationError,
 } from "@/lib/middleware/validate";
 import { createInvoice, getInvoices } from "@/lib/services/invoice.service";
-import { InvoiceNumberTakenError } from "@/lib/errors";
 import {
   InvoiceCreateSchema,
   InvoiceFiltersSchema,
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     await applyRateLimit(`invoices:list:${userId}`, {
       name: "invoices_list",
-      points: 20,
+      points: env.NODE_ENV === "development" ? 50 : 20,
       duration: 60,
     });
 
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     await applyRateLimit(`invoices:create:${userId}`, {
       name: "invoices_create",
-      points: 10,
+      points: env.NODE_ENV === "development" ? 50 : 10,
       duration: 60,
     });
 

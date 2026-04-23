@@ -1,3 +1,4 @@
+import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { AuthError, ForbiddenError, requireAuth } from "@/lib/middleware/auth";
 import { applyRateLimit, RateLimitError } from "@/lib/middleware/rate-limit";
@@ -23,7 +24,7 @@ export async function GET(
 
     await applyRateLimit(`invoice:pdf:${userId}:${id}`, {
       name: "invoice_pdf_download",
-      points: 10,
+      points: env.NODE_ENV === "development" ? 30 : 10,
       duration: 60,
     });
 

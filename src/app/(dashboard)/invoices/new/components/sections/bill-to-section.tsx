@@ -46,11 +46,23 @@ export function BillToSection() {
 
   const handleSelect = useCallback(
     (suggestion: ClientSuggestion) => {
-      setValue("clientName", suggestion.clientName, { shouldValidate: true });
-      setValue("clientEmail", suggestion.clientEmail, { shouldValidate: true });
-      setValue("clientCompany", suggestion.clientCompany ?? "");
-      setValue("clientAddress", suggestion.clientAddress ?? "");
-      setValue("clientGstin", suggestion.clientGstin ?? "");
+      setValue("clientName", suggestion.clientName, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      setValue("clientEmail", suggestion.clientEmail, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      setValue("clientCompany", suggestion.clientCompany ?? "", {
+        shouldDirty: true,
+      });
+      setValue("clientAddress", suggestion.clientAddress ?? "", {
+        shouldDirty: true,
+      });
+      setValue("clientGstin", suggestion.clientGstin ?? "", {
+        shouldDirty: true,
+      });
       setInputValue(suggestion.clientName);
       setOpen(false);
       inputRef.current?.blur();
@@ -59,11 +71,11 @@ export function BillToSection() {
   );
 
   const handleClear = useCallback(() => {
-    setValue("clientName", "");
-    setValue("clientEmail", "");
-    setValue("clientCompany", "");
-    setValue("clientAddress", "");
-    setValue("clientGstin", "");
+    setValue("clientName", "", { shouldDirty: true });
+    setValue("clientEmail", "", { shouldDirty: true });
+    setValue("clientCompany", "", { shouldDirty: true });
+    setValue("clientAddress", "", { shouldDirty: true });
+    setValue("clientGstin", "", { shouldDirty: true });
     setInputValue("");
     setOpen(false);
     inputRef.current?.focus();
@@ -73,7 +85,7 @@ export function BillToSection() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const val = e.target.value;
       setInputValue(val);
-      setValue("clientName", val, { shouldValidate: true });
+      setValue("clientName", val, { shouldValidate: true, shouldDirty: true });
       if (val.trim().length > 0) {
         setOpen(true);
       } else {
@@ -120,6 +132,7 @@ export function BillToSection() {
                   className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 "
                   onMouseDown={handleClear}
                   tabIndex={-1}
+                  aria-label="Clear client selection"
                 >
                   <X className="h-3.5 w-3.5 text-muted-foreground" />
                 </Button>

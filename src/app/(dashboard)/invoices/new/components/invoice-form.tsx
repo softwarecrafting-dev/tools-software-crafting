@@ -4,6 +4,7 @@ import type { UserSettingsRecord } from "@/lib/db/repositories/types";
 import { InvoiceBaseSchema } from "@/lib/validators/invoice";
 import { addDays, startOfDay } from "date-fns";
 import { motion } from "motion/react";
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import type { z } from "zod";
 import { SectionCard } from "./section-card";
@@ -29,6 +30,11 @@ function buildDefaultValues(
     Number(settings?.defaultPaymentTerms) || DEFAULT_PAYMENT_TERMS_DAYS;
 
   return {
+    clientName: "",
+    clientEmail: "",
+    clientCompany: "",
+    clientAddress: "",
+    clientGstin: "",
     invoiceNumber: nextInvoiceNumber ?? "",
     currency:
       (settings?.defaultCurrency as InvoiceFormValues["currency"]) ?? "INR",
@@ -82,16 +88,65 @@ export function InvoiceForm({
   isSettingsIncomplete,
   logoUrl,
   signatureUrl,
+  saveDraft,
+  isSaving,
 }: {
   isSettingsIncomplete: boolean;
   logoUrl?: string | null;
   signatureUrl?: string | null;
+  saveDraft: (data: InvoiceFormValues, isAutosave?: boolean) => Promise<void>;
+  isSaving: boolean;
 }) {
-  const { handleSubmit } = useFormContext<InvoiceFormValues>();
+  const { handleSubmit, reset, formState } = useFormContext<InvoiceFormValues>();
+  const isDirty = formState.isDirty;
 
   const onSubmit = (data: InvoiceFormValues) => {
-    console.log("Submit invoice form", data);
+    void saveDraft(data).then(() => {
+      reset(data, { keepValues: true });
+    });
   };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (isDirty && !isSaving) {
+        handleSubmit((data) => {
+          void saveDraft(data, true).then(() => {
+            reset(data, { keepValues: true });
+          });
+        })();
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [isDirty, isSaving, handleSubmit, saveDraft, reset]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        handleSubmit((data) => {
+          void saveDraft(data).then(() => {
+            reset(data, { keepValues: true });
+          });
+        })();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleSubmit, saveDraft, reset]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>

@@ -1,3 +1,4 @@
+import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { AuthError, ForbiddenError, requireAuth } from "@/lib/middleware/auth";
 import { applyRateLimit, RateLimitError } from "@/lib/middleware/rate-limit";
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
 
     await applyRateLimit(`invoices:check-number:${userId}`, {
       name: "invoices_check_number",
-      points: 60,
+      points: env.NODE_ENV === "development" ? 60 : 30,
       duration: 60,
     });
 

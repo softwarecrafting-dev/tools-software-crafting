@@ -1,10 +1,12 @@
 import type { ClientSuggestion } from "@/lib/db/repositories/invoice.repo";
 import * as invoiceRepo from "@/lib/db/repositories/invoice.repo";
-import type { InvoiceRecord } from "@/lib/db/repositories/types";
+import type { InvoiceRecord, NewInvoice } from "@/lib/db/repositories/types";
 import { InvoiceNumberTakenError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { ValidationError } from "@/lib/middleware/validate";
 import {
   InvoiceCreateSchema,
+  InvoiceUpdateSchema,
   type InvoiceFiltersInput,
 } from "@/lib/validators/invoice";
 import * as z from "zod";
@@ -65,6 +67,7 @@ export async function getInvoice(
     return invoice;
   } catch (error) {
     logger.error("Failed to fetch invoice", { id, userId, error });
+
     throw error;
   }
 }
@@ -140,7 +143,7 @@ export async function createInvoice(
       ...rest,
       fromPan: fromPan ?? undefined,
       userId,
-      status: "draft",
+      status: data.status || "draft",
       issueDate: new Date(data.issueDate),
       dueDate: new Date(data.dueDate),
       lineItems: data.lineItems,
@@ -170,6 +173,113 @@ export async function createInvoice(
     return invoice;
   } catch (error) {
     logger.error("Failed to create invoice", { userId, error });
+
+    throw error;
+  }
+}
+
+export async function updateInvoice(
+  id: string,
+  userId: string,
+  data: z.infer<typeof InvoiceUpdateSchema>,
+  options?: AuditContext,
+): Promise<InvoiceRecord | undefined> {
+  try {
+    const current = await invoiceRepo.findInvoiceById(id, userId);
+    if (!current) return undefined;
+
+    if (data.invoiceNumber) {
+      const exists = await invoiceRepo.checkNumberExists(
+        userId,
+        data.invoiceNumber.trim(),
+      );
+
+      if (exists && current.invoiceNumber !== data.invoiceNumber.trim()) {
+        throw new InvoiceNumberTakenError();
+      }
+    }
+
+    if (data.issueDate || data.dueDate) {
+      const newIssueDate = data.issueDate
+        ? new Date(data.issueDate)
+        : new Date(current.issueDate);
+      const newDueDate = data.dueDate
+        ? new Date(data.dueDate)
+        : new Date(current.dueDate);
+
+      if (newDueDate < newIssueDate) {
+        throw new ValidationError([
+          { field: "dueDate", message: "Due date cannot be before issue date" },
+        ]);
+      }
+    }
+
+    const normalizedData = { ...data } as Record<string, unknown>;
+
+    if (data.taxRate !== undefined)
+      normalizedData.taxRate = data.taxRate.toFixed(2);
+    if (data.taxAmount !== undefined)
+      normalizedData.taxAmount = data.taxAmount.toFixed(2);
+    if (data.discountValue !== undefined)
+      normalizedData.discountValue = data.discountValue.toFixed(2);
+    if (data.discountAmount !== undefined)
+      normalizedData.discountAmount = data.discountAmount.toFixed(2);
+    if (data.subtotal !== undefined)
+      normalizedData.subtotal = data.subtotal.toFixed(2);
+    if (data.total !== undefined) normalizedData.total = data.total.toFixed(2);
+
+    if (data.issueDate) normalizedData.issueDate = new Date(data.issueDate);
+    if (data.dueDate) normalizedData.dueDate = new Date(data.dueDate);
+
+    delete normalizedData.id;
+    delete normalizedData.userId;
+
+    const invoice = await invoiceRepo.update(
+      id,
+      userId,
+      normalizedData as Partial<NewInvoice>,
+    );
+
+    if (invoice) {
+      await logAudit("invoice_updated", {
+        userId,
+        entityType: "invoice",
+        entityId: id,
+        ipAddress: options?.ipAddress,
+        userAgent: options?.userAgent,
+        metadata: { updates: Object.keys(data) },
+      });
+
+      logger.info("Invoice updated", { userId, invoiceId: id });
+    }
+
+    return invoice;
+  } catch (error) {
+    logger.error("Failed to update invoice", { id, userId, error });
+
+    throw error;
+  }
+}
+
+export async function deleteInvoice(
+  id: string,
+  userId: string,
+  options?: AuditContext,
+): Promise<void> {
+  try {
+    await invoiceRepo.deleteInvoice(id, userId);
+
+    await logAudit("invoice_deleted", {
+      userId,
+      entityType: "invoice",
+      entityId: id,
+      ipAddress: options?.ipAddress,
+      userAgent: options?.userAgent,
+    });
+
+    logger.info("Invoice deleted", { userId, invoiceId: id });
+  } catch (error) {
+    logger.error("Failed to delete invoice", { id, userId, error });
 
     throw error;
   }

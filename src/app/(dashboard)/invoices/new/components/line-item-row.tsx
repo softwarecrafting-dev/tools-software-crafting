@@ -141,6 +141,7 @@ export function LineItemRow({
           {...listeners}
           className="flex h-10 w-6 items-center justify-center shrink-0 cursor-grab touch-none text-muted-foreground/30 hover:text-muted-foreground transition-colors active:cursor-grabbing"
           tabIndex={-1}
+          aria-label="Drag to reorder"
         >
           <GripVertical className="h-4 w-4" />
         </button>

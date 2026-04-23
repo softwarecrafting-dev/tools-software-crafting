@@ -258,6 +258,26 @@ export async function findAllInvoices(
   return { items, nextCursor };
 }
 
+export async function update(
+  id: string,
+  userId: string,
+  data: Partial<NewInvoice>,
+): Promise<InvoiceRecord | undefined> {
+  const [invoice] = await db
+    .update(invoices)
+    .set({ ...data, updatedAt: new Date() })
+    .where(
+      and(
+        eq(invoices.id, id),
+        eq(invoices.userId, userId),
+        isNull(invoices.deletedAt),
+      ),
+    )
+    .returning();
+
+  return invoice;
+}
+
 export async function deleteInvoice(id: string, userId: string): Promise<void> {
   await db
     .update(invoices)
