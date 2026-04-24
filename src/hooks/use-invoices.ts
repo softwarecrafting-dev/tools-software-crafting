@@ -3,6 +3,7 @@ import type { InvoiceRecord } from "@/lib/db/repositories/types";
 import type {
   InvoiceCreateInput,
   InvoiceFiltersQuery,
+  InvoiceSendInput,
   InvoiceUpdateInput,
 } from "@/lib/validators/invoice";
 import {
@@ -133,6 +134,43 @@ export function useUpdateInvoice() {
 
       toast.error(message);
       console.error("Update invoice error:", error);
+    },
+
+    retry: false,
+  });
+}
+
+export function useSendInvoice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: InvoiceSendInput;
+    }) => {
+      const resp = await apiClient.post<InvoiceSendInput, { success: boolean }>(
+        `/invoices/${id}/send`,
+        payload,
+      );
+
+      return resp;
+    },
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["invoice", variables.id] });
+      toast.success("Invoice sent successfully");
+    },
+
+    onError: (error) => {
+      const message =
+        error instanceof ApiError ? error.message : "Failed to send invoice";
+
+      toast.error(message);
+      console.error("Send invoice error:", error);
     },
 
     retry: false,

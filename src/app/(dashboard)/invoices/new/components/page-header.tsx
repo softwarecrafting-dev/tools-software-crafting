@@ -14,7 +14,9 @@ import { useFormContext, type UseFormSetValue, type FieldErrors } from "react-ho
 import { toast } from "sonner";
 import type { InvoiceFormValues } from "./invoice-form";
 import { SavingIndicator } from "./saving-indicator";
+import { SendInvoiceModal } from "./send-invoice-modal";
 import { StatusBadge } from "./status-badge";
+import type { UserSettingsRecord } from "@/lib/db/repositories/types";
 
 const GUIDANCE_KEY = "invoice_save_guidance_seen_session";
 
@@ -22,6 +24,7 @@ export function PageHeader({
   isSaving,
   lastSavedAt,
   saveDraft,
+  settings,
 }: {
   isSaving: boolean;
   lastSavedAt: Date | null;
@@ -30,8 +33,10 @@ export function PageHeader({
     isAutosave?: boolean,
     setValue?: UseFormSetValue<InvoiceFormValues>,
   ) => Promise<string | null | undefined>;
+  settings: UserSettingsRecord | null | undefined;
 }) {
-  const { handleSubmit, setValue, reset } = useFormContext<InvoiceFormValues>();
+  const { handleSubmit, setValue, reset, watch, getValues } =
+    useFormContext<InvoiceFormValues>();
 
   const onInvalid = (errors: FieldErrors<InvoiceFormValues>) => {
     console.error("Validation errors:", errors);
@@ -39,6 +44,7 @@ export function PageHeader({
   };
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [shouldShowGuidance, setShouldShowGuidance] = useState(false);
+  const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
   useEffect(() => {
     const seen = sessionStorage.getItem(GUIDANCE_KEY);
@@ -138,12 +144,32 @@ export function PageHeader({
               )}
             </Tooltip>
 
-            <Button id="send-invoice-btn-header" className="">
+            <Button
+              id="send-invoice-btn-header"
+              className="gap-2"
+              onClick={() => setIsSendModalOpen(true)}
+            >
               <Send className="h-4 w-4" />
               Send Invoice
             </Button>
           </div>
         </div>
+
+        <SendInvoiceModal
+          isOpen={isSendModalOpen}
+          onOpenChange={setIsSendModalOpen}
+          invoiceId={watch("id")}
+          clientEmail={watch("clientEmail")}
+          invoiceNumber={watch("invoiceNumber")}
+          amount={`${watch("currency")} ${watch("total")}`}
+          businessName={settings?.businessName || "SoftwareCrafting User"}
+          saveDraft={saveDraft}
+          getFormValues={getValues}
+          setValue={setValue}
+          onSuccess={() => {
+            // Potentially navigate or update status
+          }}
+        />
       </div>
     </motion.header>
   );

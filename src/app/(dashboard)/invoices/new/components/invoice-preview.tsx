@@ -101,7 +101,7 @@ export function InvoicePreview() {
         </div>
       </div>
 
-      <Card className="relative aspect-[1/1.4142] w-full overflow-hidden text-foreground shadow-2xl border-border/50">
+      <Card className="relative aspect-[1/1.4142] w-full overflow-hidden text-foreground  border-border/50">
         <div className="absolute inset-0 overflow-auto scrollbar-hide">
           <div className=" origin-top scale-(--preview-scale,1)">
             <AnimatePresence mode="wait">

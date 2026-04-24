@@ -124,19 +124,19 @@ export function InvoiceForm({
     toast.error("Please fix the errors in the form before saving.");
   };
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isDirty && !isSaving) {
-        handleSubmit((data) => {
-          void saveDraft(data, true, setValue).then((id) => {
-            reset({ ...data, id: id ?? data.id });
-          });
-        }, onInvalid)();
-      }
-    }, 10000);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (isDirty && !isSaving) {
+  //       handleSubmit((data) => {
+  //         void saveDraft(data, true, setValue).then((id) => {
+  //           reset({ ...data, id: id ?? data.id });
+  //         });
+  //       }, onInvalid)();
+  //     }
+  //   }, 10000);
 
-    return () => clearInterval(interval);
-  }, [isDirty, isSaving, handleSubmit, saveDraft, reset, setValue, getValues]);
+  //   return () => clearInterval(interval);
+  // }, [isDirty, isSaving, handleSubmit, saveDraft, reset, setValue, getValues]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
