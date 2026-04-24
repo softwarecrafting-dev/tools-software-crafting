@@ -100,7 +100,8 @@ export function InvoicesClient() {
   });
 
   const allInvoices = useMemo(
-    () => data?.pages.flatMap((page) => page.items) ?? [],
+    () =>
+      data?.pages.flatMap((page) => page.data.items.filter(Boolean)) ?? [],
     [data],
   );
 

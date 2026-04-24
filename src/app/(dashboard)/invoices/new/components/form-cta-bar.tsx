@@ -7,7 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { FileText, InfoIcon, Send } from "lucide-react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, type UseFormSetValue } from "react-hook-form";
 import type { InvoiceFormValues } from "./invoice-form";
 
 import { SavingIndicator } from "./saving-indicator";
@@ -17,11 +17,15 @@ export function FormCTABar({
   isSaving,
   lastSavedAt,
 }: {
-  saveDraft: (data: InvoiceFormValues, isAutosave?: boolean) => Promise<void>;
+  saveDraft: (
+    data: InvoiceFormValues,
+    isAutosave?: boolean,
+    setValue?: UseFormSetValue<InvoiceFormValues>,
+  ) => Promise<string | null | undefined>;
   isSaving: boolean;
   lastSavedAt: Date | null;
 }) {
-  const { handleSubmit } = useFormContext<InvoiceFormValues>();
+  const { handleSubmit, setValue } = useFormContext<InvoiceFormValues>();
 
   return (
     <div className="absolute bottom-1 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-3rem)] max-w-2xl px-6 py-4 bg-background/10 backdrop-blur-lg rounded-2xl border shadow-md ">
@@ -29,7 +33,7 @@ export function FormCTABar({
         <div className="flex items-center gap-4">
           <SavingIndicator isSaving={isSaving} lastSavedAt={lastSavedAt} />
         </div>
- 
+
         <div className="flex items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -38,7 +42,9 @@ export function FormCTABar({
                 variant="outline"
                 className="h-10"
                 disabled={isSaving}
-                onClick={handleSubmit((data) => saveDraft(data))}
+                onClick={handleSubmit((data) =>
+                  saveDraft(data, false, setValue),
+                )}
               >
                 <FileText className="h-4 w-4" />
                 Save Draft

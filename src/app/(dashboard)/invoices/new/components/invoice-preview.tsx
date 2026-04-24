@@ -11,6 +11,7 @@ import {
 import { useDownloadInvoicePdf } from "@/hooks/use-invoice-pdf";
 import { Download, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { useDebounce } from "use-debounce";
 import type { InvoiceFormValues } from "./invoice-form";
@@ -19,14 +20,25 @@ import { MinimalPreview } from "./preview/preview-minimal";
 import { ModernPreview } from "./preview/preview-modern";
 
 export function InvoicePreview() {
-  const { control, setValue } = useFormContext<InvoiceFormValues>();
+  const { control, setValue, register } = useFormContext<InvoiceFormValues>();
 
   const watchedValues = useWatch({ control });
   const [debouncedValues] = useDebounce(watchedValues, 300);
 
   const template = watchedValues.template || "minimal";
-  const invoiceId = watchedValues.id;
+  const watchedId = watchedValues.id;
   const invoiceNumber = watchedValues.invoiceNumber || "Draft";
+
+  const [persistentId, setPersistentId] = useState<string | undefined>(
+    watchedId,
+  );
+  useEffect(() => {
+    if (watchedId && watchedId !== persistentId) {
+      setPersistentId(watchedId);
+    }
+  }, [watchedId, persistentId]);
+
+  const invoiceId = watchedId || persistentId;
 
   const { mutate: downloadPdf, isPending } = useDownloadInvoicePdf();
 
@@ -38,6 +50,10 @@ export function InvoicePreview() {
 
   return (
     <div className="sticky top-24 space-y-4">
+      <input type="hidden" {...register("id")} />
+      {/* <div className="mb-4">
+        <SavingIndicator isSaving={isSaving} lastSavedAt={lastSavedAt} />
+      </div> */}
       <div className="flex items-center justify-between">
         <Tabs
           value={template}
@@ -87,7 +103,7 @@ export function InvoicePreview() {
 
       <Card className="relative aspect-[1/1.4142] w-full overflow-hidden text-foreground shadow-2xl border-border/50">
         <div className="absolute inset-0 overflow-auto scrollbar-hide">
-          <div className="min-w-[800px] origin-top scale-(--preview-scale,1)">
+          <div className=" origin-top scale-(--preview-scale,1)">
             <AnimatePresence mode="wait">
               <motion.div
                 key={template}

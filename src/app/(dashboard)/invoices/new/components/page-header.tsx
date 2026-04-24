@@ -10,7 +10,8 @@ import { ArrowLeft, FileText, InfoIcon, Send } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, type UseFormSetValue, type FieldErrors } from "react-hook-form";
+import { toast } from "sonner";
 import type { InvoiceFormValues } from "./invoice-form";
 import { SavingIndicator } from "./saving-indicator";
 import { StatusBadge } from "./status-badge";
@@ -24,9 +25,18 @@ export function PageHeader({
 }: {
   isSaving: boolean;
   lastSavedAt: Date | null;
-  saveDraft: (data: InvoiceFormValues, isAutosave?: boolean) => Promise<void>;
+  saveDraft: (
+    data: InvoiceFormValues,
+    isAutosave?: boolean,
+    setValue?: UseFormSetValue<InvoiceFormValues>,
+  ) => Promise<string | null | undefined>;
 }) {
-  const { handleSubmit } = useFormContext<InvoiceFormValues>();
+  const { handleSubmit, setValue, reset } = useFormContext<InvoiceFormValues>();
+
+  const onInvalid = (errors: FieldErrors<InvoiceFormValues>) => {
+    console.error("Validation errors:", errors);
+    toast.error("Please fix the errors in the form before saving.");
+  };
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [shouldShowGuidance, setShouldShowGuidance] = useState(false);
 
@@ -89,7 +99,17 @@ export function PageHeader({
                   variant="outline"
                   className="hidden sm:flex"
                   disabled={isSaving}
-                  onClick={handleSubmit((data) => saveDraft(data))}
+                  onClick={handleSubmit((data) =>
+                    saveDraft(data, false, setValue)
+                      .then((id) => {
+                        reset({ ...data, id: id ?? data.id });
+                      })
+                      .catch((err) => {
+                        console.error("Save failed:", err);
+                        toast.error("Failed to save draft. Please try again.");
+                      }),
+                    onInvalid,
+                  )}
                 >
                   <FileText className="h-4 w-4" />
                   Save Draft

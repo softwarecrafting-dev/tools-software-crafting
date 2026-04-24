@@ -98,15 +98,24 @@ export const InvoicesTable = memo(function InvoicesTable({
             onSort={onSortChange}
           />
         ),
-        cell: ({ row }) => (
-          <Link
-            href={`/invoices/${row.original.id}`}
-            className="font-medium text-primary hover:underline underline-offset-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {row.getValue("invoiceNumber")}
-          </Link>
-        ),
+        cell: ({ row }) => {
+          if (!row.original?.id) {
+            return (
+              <span className="font-medium text-muted-foreground italic">
+                No ID
+              </span>
+            );
+          }
+          return (
+            <Link
+              href={`/invoices/${row.original.id}`}
+              className="font-medium text-primary hover:underline underline-offset-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {row.getValue("invoiceNumber")}
+            </Link>
+          );
+        },
       },
       {
         accessorKey: "clientName",
@@ -119,14 +128,19 @@ export const InvoicesTable = memo(function InvoicesTable({
             onSort={onSortChange}
           />
         ),
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium">{row.original.clientName}</span>
-            <span className="text-xs text-muted-foreground line-clamp-1">
-              {row.original.clientEmail}
-            </span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          if (!row.original) return null;
+          return (
+            <div className="flex flex-col">
+              <span className="font-medium">
+                {row.original.clientName ?? "N/A"}
+              </span>
+              <span className="text-xs text-muted-foreground line-clamp-1">
+                {row.original.clientEmail ?? ""}
+              </span>
+            </div>
+          );
+        },
       },
       {
         accessorKey: "status",
@@ -139,9 +153,10 @@ export const InvoicesTable = memo(function InvoicesTable({
             onSort={onSortChange}
           />
         ),
-        cell: ({ row }) => (
-          <InvoiceStatusBadge status={row.getValue("status")} />
-        ),
+        cell: ({ row }) => {
+          const status = row.getValue("status") as string;
+          return <InvoiceStatusBadge status={status ?? "draft"} />;
+        },
       },
       {
         accessorKey: "issueDate",
@@ -154,11 +169,15 @@ export const InvoicesTable = memo(function InvoicesTable({
             onSort={onSortChange}
           />
         ),
-        cell: ({ row }) => (
-          <span className="text-muted-foreground whitespace-nowrap">
-            {format(new Date(row.getValue("issueDate")), "MMM dd, yyyy")}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const date = row.getValue("issueDate");
+          if (!date) return <span className="text-muted-foreground">—</span>;
+          return (
+            <span className="text-muted-foreground whitespace-nowrap">
+              {format(new Date(date as string), "MMM dd, yyyy")}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "dueDate",
@@ -171,11 +190,15 @@ export const InvoicesTable = memo(function InvoicesTable({
             onSort={onSortChange}
           />
         ),
-        cell: ({ row }) => (
-          <span className="text-muted-foreground whitespace-nowrap">
-            {format(new Date(row.getValue("dueDate")), "MMM dd, yyyy")}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const date = row.getValue("dueDate");
+          if (!date) return <span className="text-muted-foreground">—</span>;
+          return (
+            <span className="text-muted-foreground whitespace-nowrap">
+              {format(new Date(date as string), "MMM dd, yyyy")}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "total",
@@ -192,14 +215,17 @@ export const InvoicesTable = memo(function InvoicesTable({
           <span className="font-semibold tabular-nums">
             {new Intl.NumberFormat("en-US", {
               style: "currency",
-              currency: row.original.currency,
-            }).format(parseFloat(row.getValue("total")))}
+              currency: row.original?.currency ?? "INR",
+            }).format(parseFloat(row.getValue("total") ?? "0"))}
           </span>
         ),
       },
       {
         id: "actions",
-        cell: ({ row }) => <RowActions invoice={row.original} />,
+        cell: ({ row }) => {
+          if (!row.original) return null;
+          return <RowActions invoice={row.original} />;
+        },
       },
     ],
     [sortBy, sortOrder, onSortChange],
@@ -300,7 +326,9 @@ export const InvoicesTable = memo(function InvoicesTable({
                   className="group border-b transition-colors hover:bg-muted/40 data-[state=selected]:bg-primary/5 cursor-pointer"
                   data-state={row.getIsSelected() && "selected"}
                   onClick={() => {
-                    router.push(`/invoices/${row.original.id}`);
+                    if (row.original?.id) {
+                      router.push(`/invoices/${row.original.id}`);
+                    }
                   }}
                 >
                   {row.getVisibleCells().map((cell) => (
@@ -392,7 +420,9 @@ function SortableHeader({
   );
 }
 
-function RowActions({ invoice: _invoice }: { invoice: InvoiceRecord }) {
+function RowActions({ invoice }: { invoice: InvoiceRecord }) {
+  if (!invoice?.id) return null;
+  const _invoice = invoice;
   return (
     <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
       <DropdownMenu>

@@ -25,6 +25,8 @@ export async function getInvoices(
   try {
     const result = await invoiceRepo.findAllInvoices(userId, filters);
 
+    result.items = result.items.filter(Boolean);
+
     await logAudit("invoice_list_viewed", {
       userId,
       ipAddress: options?.ipAddress,

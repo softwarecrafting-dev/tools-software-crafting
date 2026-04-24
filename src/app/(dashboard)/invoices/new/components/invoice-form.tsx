@@ -5,8 +5,14 @@ import { InvoiceBaseSchema } from "@/lib/validators/invoice";
 import { addDays, startOfDay } from "date-fns";
 import { motion } from "motion/react";
 import { useEffect } from "react";
-import { useFormContext } from "react-hook-form";
-import type { z } from "zod";
+import {
+  useFormContext,
+  type FieldErrors,
+  type UseFormSetValue,
+} from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { SavingIndicator } from "./saving-indicator";
 import { SectionCard } from "./section-card";
 import { AttachmentsSection } from "./sections/attachments-section";
 import { BillFromSection } from "./sections/bill-from-section";
@@ -19,7 +25,7 @@ import { TotalsSection } from "./sections/totals-section";
 
 const DEFAULT_PAYMENT_TERMS_DAYS = 30;
 
-export type InvoiceFormValues = z.output<typeof InvoiceBaseSchema>;
+export type InvoiceFormValues = z.infer<typeof InvoiceBaseSchema>;
 
 function buildDefaultValues(
   settings: UserSettingsRecord | null | undefined,
@@ -90,51 +96,63 @@ export function InvoiceForm({
   signatureUrl,
   saveDraft,
   isSaving,
+  lastSavedAt,
 }: {
   isSettingsIncomplete: boolean;
   logoUrl?: string | null;
   signatureUrl?: string | null;
-  saveDraft: (data: InvoiceFormValues, isAutosave?: boolean) => Promise<void>;
+  saveDraft: (
+    data: InvoiceFormValues,
+    isAutosave?: boolean,
+    setValue?: UseFormSetValue<InvoiceFormValues>,
+  ) => Promise<string | null | undefined>;
   isSaving: boolean;
+  lastSavedAt: Date | null;
 }) {
-  const { handleSubmit, reset, formState } = useFormContext<InvoiceFormValues>();
+  const { handleSubmit, reset, formState, setValue, getValues, register } =
+    useFormContext<InvoiceFormValues>();
   const isDirty = formState.isDirty;
 
   const onSubmit = (data: InvoiceFormValues) => {
-    void saveDraft(data).then(() => {
-      reset(data, { keepValues: true });
+    void saveDraft(data, false, setValue).then((id) => {
+      reset({ ...data, id: id ?? data.id });
     });
+  };
+
+  const onInvalid = (errors: FieldErrors<InvoiceFormValues>) => {
+    console.error("Validation errors:", errors);
+    toast.error("Please fix the errors in the form before saving.");
   };
 
   useEffect(() => {
     const interval = setInterval(() => {
       if (isDirty && !isSaving) {
         handleSubmit((data) => {
-          void saveDraft(data, true).then(() => {
-            reset(data, { keepValues: true });
+          void saveDraft(data, true, setValue).then((id) => {
+            reset({ ...data, id: id ?? data.id });
           });
-        })();
+        }, onInvalid)();
       }
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [isDirty, isSaving, handleSubmit, saveDraft, reset]);
+  }, [isDirty, isSaving, handleSubmit, saveDraft, reset, setValue, getValues]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         handleSubmit((data) => {
-          void saveDraft(data).then(() => {
-            reset(data, { keepValues: true });
+          void saveDraft(data, false, setValue).then(() => {
+            reset(getValues());
           });
-        })();
+        }, onInvalid)();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleSubmit, saveDraft, reset]);
+  }, [handleSubmit, saveDraft, reset, setValue, getValues]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -149,7 +167,11 @@ export function InvoiceForm({
   }, [isDirty]);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate>
+    <form onSubmit={handleSubmit(onSubmit, onInvalid)} noValidate>
+      <input type="hidden" {...register("id")} />
+      <div className="flex justify-end mb-4 pr-1">
+        <SavingIndicator isSaving={isSaving} lastSavedAt={lastSavedAt} />
+      </div>
       <div className="space-y-4">
         <motion.div
           initial={{ opacity: 0, y: 8 }}

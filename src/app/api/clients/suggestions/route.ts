@@ -1,3 +1,4 @@
+import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { AuthError, ForbiddenError, requireAuth } from "@/lib/middleware/auth";
 import { applyRateLimit, RateLimitError } from "@/lib/middleware/rate-limit";
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     await applyRateLimit(`clients:suggestions:${userId}`, {
       name: "clients_suggestions",
-      points: 60,
+      points: env.NODE_ENV === "development" ? 100 : 30,
       duration: 60,
     });
 
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
         {
           status: 429,
           headers: { "Retry-After": String(error.retryAfter) },
-        },
+        }
       );
     }
 
@@ -54,21 +55,21 @@ export async function GET(request: NextRequest) {
           code: "VALIDATION_ERROR",
           details: error.details,
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (error instanceof AuthError) {
       return Response.json(
         { success: false, error: "Unauthorized", code: "UNAUTHORIZED" },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
     if (error instanceof ForbiddenError) {
       return Response.json(
         { success: false, error: "Forbidden", code: "FORBIDDEN" },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
         error: "Something went wrong. Please try again.",
         code: "INTERNAL_ERROR",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

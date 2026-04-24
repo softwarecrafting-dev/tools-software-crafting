@@ -67,7 +67,7 @@ export function BillToSection() {
       setOpen(false);
       inputRef.current?.blur();
     },
-    [setValue],
+    [setValue]
   );
 
   const handleClear = useCallback(() => {
@@ -92,7 +92,7 @@ export function BillToSection() {
         setOpen(false);
       }
     },
-    [setValue],
+    [setValue]
   );
 
   return (
@@ -116,6 +116,7 @@ export function BillToSection() {
                   if (inputValue.trim().length > 0) setOpen(true);
                 }}
                 aria-invalid={!!errors.clientName || !!apiError}
+                aria-label="Client Name Search"
                 className="h-10 pr-8"
                 autoComplete="off"
               />
@@ -155,7 +156,7 @@ export function BillToSection() {
                 No clients found.
               </p>
             ) : (
-              <ScrollArea className="h-60">
+              <ScrollArea className="h-60 pr-4">
                 <div className="p-1">
                   {suggestions.map((s) => (
                     <button

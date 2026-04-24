@@ -1,6 +1,7 @@
 import { useCreateInvoice, useUpdateInvoice } from "@/hooks/use-invoices";
 import { InvoiceBaseSchema } from "@/lib/validators/invoice";
 import { useCallback, useState } from "react";
+import type { UseFormSetValue } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
 
@@ -16,7 +17,11 @@ export function useInvoiceLifecycle() {
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   const saveDraft = useCallback(
-    async (data: InvoiceFormValues, isAutosave = false) => {
+    async (
+      data: InvoiceFormValues,
+      isAutosave = false,
+      setValue?: UseFormSetValue<InvoiceFormValues>,
+    ) => {
       try {
         if (invoiceId) {
           await updateMutation.mutateAsync({ id: invoiceId, payload: data });
@@ -24,16 +29,23 @@ export function useInvoiceLifecycle() {
           setLastSavedAt(new Date());
 
           if (!isAutosave) toast.success("Draft updated successfully");
+
+          return invoiceId;
         } else {
           const result = await createMutation.mutateAsync(data);
 
           setInvoiceId(result.id);
           setLastSavedAt(new Date());
 
+          if (setValue) {
+            setValue("id", result.id);
+          }
+
           if (!isAutosave) {
             toast.success("Draft saved successfully");
-            // router.replace(`/invoices/${result.id}/edit`, { scroll: false });
           }
+
+          return result.id;
         }
       } catch (error) {
         if (!isAutosave) {

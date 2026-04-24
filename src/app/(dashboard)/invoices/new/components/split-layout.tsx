@@ -2,13 +2,18 @@
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { UserSettingsRecord } from "@/lib/db/repositories/types";
+import { type UseFormSetValue } from "react-hook-form";
 import type { InvoiceFormValues } from "./invoice-form";
 import { InvoiceForm } from "./invoice-form";
 import { InvoicePreview } from "./invoice-preview";
 
 interface SplitLayoutProps {
   settings: UserSettingsRecord | null | undefined;
-  saveDraft: (data: InvoiceFormValues, isAutosave?: boolean) => Promise<void>;
+  saveDraft: (
+    data: InvoiceFormValues,
+    isAutosave?: boolean,
+    setValue?: UseFormSetValue<InvoiceFormValues>,
+  ) => Promise<string | null | undefined>;
   isSaving: boolean;
   lastSavedAt: Date | null;
 }
@@ -33,6 +38,7 @@ export function SplitLayout({
               signatureUrl={settings?.signatureUrl}
               saveDraft={saveDraft}
               isSaving={isSaving}
+              lastSavedAt={lastSavedAt}
             />
           </div>
         </ScrollArea>
