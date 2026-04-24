@@ -124,4 +124,13 @@ export const InvoiceFiltersSchema = z.object({
 });
 
 export type InvoiceFiltersInput = z.infer<typeof InvoiceFiltersSchema>;
+
+export const InvoiceSendSchema = z.object({
+  toEmail: z.email("Invalid recipient email"),
+  subject: z.string().max(255).optional(),
+  message: z.string().max(2000).optional(),
+  attachPdf: z.boolean().default(true),
+});
+
+export type InvoiceSendInput = z.infer<typeof InvoiceSendSchema>;
 export type InvoiceFiltersQuery = z.input<typeof InvoiceFiltersSchema>;

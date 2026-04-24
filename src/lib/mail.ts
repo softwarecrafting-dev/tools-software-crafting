@@ -1,3 +1,4 @@
+import { InvoiceEmail } from "@/emails/invoice-email";
 import { PasswordResetEmail } from "@/emails/password-reset-email";
 import { VerificationEmail } from "@/emails/verification-email";
 import {
@@ -19,6 +20,10 @@ interface SendEmailOptions {
   type: "invoice" | "verification" | "password_reset";
   referenceId?: string;
   referenceType?: string;
+  attachments?: {
+    filename: string;
+    content: Buffer | string;
+  }[];
 }
 
 async function sendEmail({
@@ -29,6 +34,7 @@ async function sendEmail({
   type,
   referenceId,
   referenceType,
+  attachments,
 }: SendEmailOptions) {
   const fullSubject = `${subject} - ${APP_NAME}`;
 
@@ -48,6 +54,7 @@ async function sendEmail({
       to,
       subject: fullSubject,
       html,
+      attachments,
     });
 
     if (error) {
@@ -110,5 +117,45 @@ export async function sendPasswordResetEmail(
     html,
     userId,
     type: "password_reset",
+  });
+}
+
+export async function sendInvoiceEmail({
+  email,
+  businessName,
+  invoiceNumber,
+  amount,
+  message,
+  pdfBuffer,
+  userId,
+  invoiceId,
+}: {
+  email: string;
+  businessName: string;
+  invoiceNumber: string;
+  amount: string;
+  message?: string;
+  pdfBuffer: Buffer;
+  userId: string;
+  invoiceId: string;
+}) {
+  const html = await render(
+    InvoiceEmail({ businessName, invoiceNumber, amount, message }),
+  );
+
+  return sendEmail({
+    to: email,
+    subject: `Invoice ${invoiceNumber} from ${businessName}`,
+    html,
+    userId,
+    type: "invoice",
+    referenceId: invoiceId,
+    referenceType: "invoice",
+    attachments: [
+      {
+        filename: `Invoice-${invoiceNumber}.pdf`,
+        content: pdfBuffer,
+      },
+    ],
   });
 }

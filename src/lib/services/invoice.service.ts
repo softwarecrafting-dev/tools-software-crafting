@@ -3,6 +3,7 @@ import * as invoiceRepo from "@/lib/db/repositories/invoice.repo";
 import type { InvoiceRecord, NewInvoice } from "@/lib/db/repositories/types";
 import { InvoiceNumberTakenError } from "@/lib/errors";
 import { logger } from "@/lib/logger";
+import { sendInvoiceEmail } from "@/lib/mail";
 import { ValidationError } from "@/lib/middleware/validate";
 import {
   InvoiceCreateSchema,
@@ -11,6 +12,8 @@ import {
 } from "@/lib/validators/invoice";
 import * as z from "zod";
 import { logAudit } from "./audit.service";
+import { generateInvoicePdf } from "./pdf.service";
+import { getSettings } from "./settings.service";
 
 interface AuditContext {
   ipAddress?: string;
@@ -282,6 +285,84 @@ export async function deleteInvoice(
     logger.info("Invoice deleted", { userId, invoiceId: id });
   } catch (error) {
     logger.error("Failed to delete invoice", { id, userId, error });
+
+    throw error;
+  }
+}
+
+export async function sendInvoice(
+  id: string,
+  userId: string,
+  data: {
+    toEmail: string;
+    subject?: string;
+    message?: string;
+    attachPdf: boolean;
+  },
+  options?: AuditContext,
+): Promise<InvoiceRecord> {
+  try {
+    const invoice = await invoiceRepo.findInvoiceById(id, userId);
+
+    if (!invoice) {
+      throw new Error("Invoice not found");
+    }
+
+    const settings = await getSettings(userId);
+
+    const businessName =
+      invoice.fromName ||
+      settings?.businessName ||
+      "SoftwareCrafting Tools User";
+
+    let pdfBuffer: Buffer | undefined;
+
+    if (data.attachPdf) {
+      pdfBuffer = Buffer.from(await generateInvoicePdf(invoice));
+    }
+
+    const result = await sendInvoiceEmail({
+      email: data.toEmail,
+      businessName,
+      invoiceNumber: invoice.invoiceNumber,
+      amount: `${invoice.currency} ${invoice.total}`,
+      message: data.message,
+      pdfBuffer: pdfBuffer || Buffer.alloc(0),
+      userId,
+      invoiceId: id,
+    });
+
+    if (result.error) {
+      throw result.error;
+    }
+
+    const updatedInvoice = await invoiceRepo.update(id, userId, {
+      status: "sent",
+      sentAt: new Date(),
+    });
+
+    if (!updatedInvoice) {
+      throw new Error("Failed to update invoice status");
+    }
+
+    await logAudit("invoice_sent", {
+      userId,
+      entityType: "invoice",
+      entityId: id,
+      ipAddress: options?.ipAddress,
+      userAgent: options?.userAgent,
+      metadata: { toEmail: data.toEmail, invoiceNumber: invoice.invoiceNumber },
+    });
+
+    logger.info("Invoice sent", {
+      userId,
+      invoiceId: id,
+      toEmail: data.toEmail,
+    });
+
+    return updatedInvoice;
+  } catch (error) {
+    logger.error("Failed to send invoice", { id, userId, error, data });
 
     throw error;
   }
